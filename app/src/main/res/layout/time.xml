@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:id="@+id/timeBox">
+
+    <EditText
+        android:id="@+id/editHrs"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:ems="2"
+        android:inputType="number"
+        android:maxLength="2"
+        android:selectAllOnFocus="true"
+        android:text="00"
+        android:textAlignment="center"
+        android:textSize="20sp"
+        app:layout_constraintBottom_toBottomOf="@+id/btnDecHrs"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/btnIncHrs" />
+
+    <Button
+        android:id="@+id/btnIncHrs"
+        android:layout_width="@dimen/timeControlBtnWidth"
+        android:layout_height="@dimen/timeControlBtnHeight"
+        android:text="+"
+        app:layout_constraintStart_toEndOf="@+id/editHrs"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <Button
+        android:id="@+id/btnDecHrs"
+        android:layout_width="@dimen/timeControlBtnWidth"
+        android:layout_height="@dimen/timeControlBtnHeight"
+        android:text="-"
+        app:layout_constraintStart_toStartOf="@+id/btnIncHrs"
+        app:layout_constraintTop_toBottomOf="@+id/btnIncHrs" />
+
+    <EditText
+        android:id="@+id/editMin"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:ems="2"
+        android:inputType="number"
+        android:maxLength="2"
+        android:selectAllOnFocus="true"
+        android:text="00"
+        android:textAlignment="center"
+        android:textSize="20sp"
+        app:layout_constraintBottom_toBottomOf="@+id/btnDecMin"
+        app:layout_constraintStart_toEndOf="@+id/btnIncHrs"
+        app:layout_constraintTop_toTopOf="@+id/btnIncMin" />
+
+    <Button
+        android:id="@+id/btnIncMin"
+        android:layout_width="@dimen/timeControlBtnWidth"
+        android:layout_height="@dimen/timeControlBtnHeight"
+        android:text="+"
+        app:layout_constraintStart_toEndOf="@+id/editMin"
+        app:layout_constraintTop_toTopOf="@+id/btnIncHrs" />
+
+    <Button
+        android:id="@+id/btnDecMin"
+        android:layout_width="@dimen/timeControlBtnWidth"
+        android:layout_height="@dimen/timeControlBtnHeight"
+        android:text="-"
+        app:layout_constraintStart_toStartOf="@+id/btnIncMin"
+        app:layout_constraintTop_toBottomOf="@+id/btnIncMin" />
+
+    <EditText
+        android:id="@+id/editSec"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:ems="2"
+        android:inputType="number"
+        android:maxLength="2"
+        android:selectAllOnFocus="true"
+        android:text="00"
+        android:textAlignment="center"
+        android:textSize="20sp"
+        app:layout_constraintBottom_toBottomOf="@+id/btnDecSec"
+        app:layout_constraintStart_toEndOf="@+id/btnIncMin"
+        app:layout_constraintTop_toTopOf="@+id/btnIncSec" />
+
+    <Button
+        android:id="@+id/btnIncSec"
+        android:layout_width="@dimen/timeControlBtnWidth"
+        android:layout_height="@dimen/timeControlBtnHeight"
+        android:text="+"
+        app:layout_constraintStart_toEndOf="@+id/editSec"
+        app:layout_constraintTop_toTopOf="@+id/btnIncMin" />
+
+    <Button
+        android:id="@+id/btnDecSec"
+        android:layout_width="@dimen/timeControlBtnWidth"
+        android:layout_height="@dimen/timeControlBtnHeight"
+        android:text="-"
+        app:layout_constraintEnd_toEndOf="@+id/btnIncSec"
+        app:layout_constraintStart_toStartOf="@+id/btnIncSec"
+        app:layout_constraintTop_toBottomOf="@+id/btnIncSec" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

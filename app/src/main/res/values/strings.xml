@@ -1,0 +1,14 @@
+<resources>
+	<string name="app_name">WateringApp</string>
+    <string name="add_channel">Добавить канал</string>
+    <string name="refresh">Обновить</string>
+    <string name="device_status">статус</string>
+    <string name="btn_scan">Поиск</string>
+    <string name="label_none_found">Доступных устройств не обнаружено</string>
+    <string name="tv_other_devices">Доступные устройства</string>
+    <string name="tv_paired_devices">Ранее подключённые устройства</string>
+    <string name="menu_device_list">Поиск устройств</string>
+    <string name="default_device_address">19:09:30:10:0B:D1</string>
+    <string name="delete_channel">Удалить</string>
+    <string name="device_name_holder">Устройство…</string>
+</resources>

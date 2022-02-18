@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    >
+
+    <ToggleButton
+        android:id="@+id/toggleButton8"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:checked="false"
+        android:fontFamily="sans-serif-medium"
+        android:text="ToggleButton"
+        android:textOff="ПН"
+        android:textOn="ПН"
+        android:textSize="@dimen/daysBtnTextSize" />
+
+    <ToggleButton
+        android:id="@+id/toggleButton9"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:text="ToggleButton"
+        android:textOff="ВТ"
+        android:textOn="ВТ"
+        android:textSize="@dimen/daysBtnTextSize"/>
+
+    <ToggleButton
+        android:id="@+id/toggleButton10"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:text="ToggleButton"
+        android:textOff="СР"
+        android:textOn="СР"
+        android:textSize="@dimen/daysBtnTextSize"/>
+
+    <ToggleButton
+        android:id="@+id/toggleButton11"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:text="ToggleButton"
+        android:textOff="ЧТ"
+        android:textOn="ЧТ"
+        android:textSize="@dimen/daysBtnTextSize"/>
+
+    <ToggleButton
+        android:id="@+id/toggleButton12"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:text="ToggleButton"
+        android:textOff="ПТ"
+        android:textOn="ПТ"
+        android:textSize="@dimen/daysBtnTextSize"/>
+
+    <ToggleButton
+        android:id="@+id/toggleButton13"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:text="ToggleButton"
+        android:textOff="СБ"
+        android:textOn="СБ"
+        android:textSize="@dimen/daysBtnTextSize"/>
+
+    <ToggleButton
+        android:id="@+id/toggleButton14"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:text="ToggleButton"
+        android:textOff="ВС"
+        android:textOn="ВС"
+        android:textSize="@dimen/daysBtnTextSize"/>
+</LinearLayout>

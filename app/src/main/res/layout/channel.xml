@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <TextView
+        android:id="@+id/name"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="32dp"
+        android:text="Канал"
+        app:layout_constraintBottom_toBottomOf="@+id/btnOpen"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/btnOpen"
+        app:layout_constraintVertical_bias="0.517" />
+
+    <Button
+        android:id="@+id/btnOpen"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="28dp"
+        android:layout_marginTop="4dp"
+        android:text="Открыть"
+        app:layout_constraintStart_toEndOf="@+id/name"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <Button
+        android:id="@+id/btnClose"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Закрыть"
+        app:layout_constraintBottom_toBottomOf="@+id/btnOpen"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.491"
+        app:layout_constraintStart_toEndOf="@+id/btnOpen"
+        app:layout_constraintTop_toTopOf="@+id/btnOpen"
+        app:layout_constraintVertical_bias="1.0" />
+
+    <TextView
+        android:id="@+id/tvWeek1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="1 нед"
+        app:layout_constraintBottom_toBottomOf="@+id/days_of_week_1"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/days_of_week_1" />
+
+    <TextView
+        android:id="@+id/tvWeek2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="2 нед"
+        app:layout_constraintBottom_toBottomOf="@+id/days_of_week_2"
+        app:layout_constraintStart_toStartOf="@+id/tvWeek1"
+        app:layout_constraintTop_toTopOf="@+id/days_of_week_2" />
+
+    <include
+        android:id="@+id/days_of_week_1"
+        layout="@layout/days_of_week"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/tvWeek1"
+        app:layout_constraintTop_toBottomOf="@+id/radioSelectDays" />
+
+    <include
+        android:id="@+id/days_of_week_2"
+        layout="@layout/days_of_week"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toEndOf="@+id/tvWeek2"
+        app:layout_constraintTop_toBottomOf="@+id/days_of_week_1" />
+
+    <include
+        android:id="@+id/time_on"
+        layout="@layout/time"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="28dp"
+        app:layout_constraintStart_toEndOf="@+id/tvTimeOn"
+        app:layout_constraintTop_toBottomOf="@+id/days_of_week_2" />
+
+    <include
+        android:id="@+id/time_off"
+        layout="@layout/time"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintStart_toStartOf="@+id/time_on"
+        app:layout_constraintTop_toBottomOf="@+id/time_on" />
+
+    <TextView
+        android:id="@+id/tvTimeOn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="вкл"
+        app:layout_constraintBottom_toBottomOf="@+id/time_on"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/time_on" />
+
+    <TextView
+        android:id="@+id/tvTimeOff"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="выкл"
+        app:layout_constraintBottom_toBottomOf="@+id/time_off"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/time_on" />
+
+    <RadioGroup
+        android:id="@+id/radioSelectDays"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="5dp"
+        android:paddingHorizontal="10dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/btnOpen">
+        <RadioButton
+            android:id="@+id/radioCustomDay"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:checked="true"
+            android:text="Выборочно"
+            android:textSize="12sp"
+            />
+        <RadioButton
+            android:id="@+id/radioSkipDay"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Через день"
+            android:textSize="12sp"
+            />
+        <RadioButton
+            android:id="@+id/radioEveryDay"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Каждый день"
+            android:textSize="12sp"
+            />
+
+    </RadioGroup>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
