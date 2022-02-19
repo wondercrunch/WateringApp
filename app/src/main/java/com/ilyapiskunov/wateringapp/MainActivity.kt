@@ -137,11 +137,17 @@ class MainActivity : AppCompatActivity() {
 
 
     private fun onDeviceSelected(device: Device) {
-        currentDevice = device
+        runOnUiThread {
+            currentDevice = device
+        }
+
     }
 
     private fun onNoDeviceSelected() {
-        currentMenuItem.setTitle(R.string.device_name_holder)
+        runOnUiThread {
+            currentMenuItem.setTitle(R.string.device_name_holder)
+        }
+
     }
 
     private fun getChannels() : ArrayList<Channel>? {
@@ -188,7 +194,7 @@ class MainActivity : AppCompatActivity() {
                     if (it.bluetoothDevice == bluetoothDevice) disconnectedDevice = it
                 }
                 if (disconnectedDevice != null) {
-                    devices.remove(disconnectedDevice)
+                    devices.remove(disconnectedDevice!!)
                     if (currentDevice == disconnectedDevice)
                         onNoDeviceSelected()
 
