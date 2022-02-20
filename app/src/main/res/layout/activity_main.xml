@@ -9,17 +9,17 @@
 	<androidx.recyclerview.widget.RecyclerView
 		android:layout_width="0dp"
 		android:layout_height="0dp"
-		app:layout_constraintBottom_toTopOf="@id/tvStatus"
+		app:layout_constraintBottom_toTopOf="@id/btnWrite"
 		app:layout_constraintEnd_toEndOf="parent"
 		app:layout_constraintStart_toStartOf="parent"
 		app:layout_constraintTop_toTopOf="parent"
 		tools:listitem="@layout/channel"
 		android:id="@+id/listChannels"
 		/>
-	<TextView
+	<Button
 		android:layout_width="0dp"
 		android:layout_height="wrap_content"
-		android:id="@+id/tvStatus"
+		android:id="@+id/btnWrite"
 		app:layout_constraintBottom_toBottomOf="parent"
 		app:layout_constraintTop_toBottomOf="@id/listChannels"
 		app:layout_constraintStart_toStartOf="parent"
@@ -27,6 +27,7 @@
 		android:layout_marginTop="20dp"
 		android:layout_marginBottom="10dp"
 		android:layout_marginStart="20dp"
-		android:text="Статус"
+		android:layout_marginEnd="20dp"
+		android:text="@string/btnWrite"
 		/>
 </androidx.constraintlayout.widget.ConstraintLayout>

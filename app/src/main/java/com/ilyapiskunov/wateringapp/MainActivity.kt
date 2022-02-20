@@ -17,6 +17,7 @@ import kotlinx.android.synthetic.main.activity_main.*
 import org.jetbrains.anko.alert
 import org.jetbrains.anko.toast
 import java.io.ByteArrayInputStream
+import java.lang.Exception
 import java.util.*
 import java.util.concurrent.*
 import java.util.concurrent.atomic.AtomicBoolean
@@ -50,11 +51,11 @@ class MainActivity : AppCompatActivity() {
         ConnectionManager.registerListener(connectionEventListener)
         ModelPreferencesManager.with(this)
         setContentView(R.layout.activity_main)
-        channels.add(Channel()) //TODO DEBUG
         //Log.i(TAG, "Channels size: " + channels.size)
         listChannels.adapter = channelsAdapter
         listChannels.layoutManager = LinearLayoutManager(this)
-        listChannels.setHasFixedSize(true)
+        //listChannels.setHasFixedSize(true)
+
         val separator = DividerItemDecoration(this, LinearLayout.VERTICAL)
         separator.setDrawable(ContextCompat.getDrawable(this, R.drawable.divider)!!)
         listChannels.addItemDecoration(separator)
@@ -69,6 +70,10 @@ class MainActivity : AppCompatActivity() {
         if (!bluetoothAdapter!!.isEnabled) {
             val enableBluetoothIntent = Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
             startActivityForResult(enableBluetoothIntent, REQUEST_ENABLE_BT)
+        }
+
+        btnWrite.setOnClickListener {
+            currentDevice?.loadConfig() ?: alertDeviceNotConnected()
         }
 
 
@@ -139,29 +144,25 @@ class MainActivity : AppCompatActivity() {
     private fun onDeviceSelected(device: Device) {
         runOnUiThread {
             currentDevice = device
+            currentMenuItem.title = device.name
+            channels.clear()
+            channels.addAll(device.channels)
+            channelsAdapter.notifyDataSetChanged()
+
         }
 
     }
 
     private fun onNoDeviceSelected() {
         runOnUiThread {
+            currentDevice = null
             currentMenuItem.setTitle(R.string.device_name_holder)
+            channels.clear()
+            channelsAdapter.notifyDataSetChanged()
         }
 
     }
 
-    private fun getChannels() : ArrayList<Channel>? {
-        val cmd = byteArrayOf(0x80.toByte(), 0x86.toByte(), 1, 33)
-        //write(cmd)
-        val reply : ByteArray = replyQueue.poll(200, TimeUnit.MILLISECONDS) ?: return null
-        val buffer = ByteArrayInputStream(reply)
-        val count = buffer.read()
-        val channels = ArrayList<Channel>(count)
-        for (i in 0 until count) {
-            
-        }
-        return channels
-    }
 
     private fun alertDeviceNotConnected() {
         runOnUiThread {
@@ -174,17 +175,32 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun alertError(message : String?) {
+        runOnUiThread {
+            alert {
+                title("Ошибка")
+                message(message?:"Неизвестная ошибка")
+                cancellable(false)
+                positiveButton("OK") {}
+            }.show()
+        }
+    }
+
     private val connectionEventListener by lazy {
         ConnectionEventListener().apply {
             onConnectionSetupComplete = {
                 bluetoothDevice ->
-                val connectedDevice = Device(bluetoothDevice)
-                devices.add(connectedDevice)
-                if (currentDevice == null) {
+                try {
+                    val connectedDevice = Device(bluetoothDevice)
+                    devices.add(connectedDevice)
                     onDeviceSelected(connectedDevice)
-                }
-                runOnUiThread {
-                    toast("Установлено соединение с ${connectedDevice.name}")
+
+                    runOnUiThread {
+                        toast("Установлено соединение с ${connectedDevice.name}")
+                    }
+                } catch (e : Exception) {
+                    alertError(e.message)
+                    ConnectionManager.disconnect(bluetoothDevice)
                 }
             }
             onDisconnect = {
@@ -195,9 +211,13 @@ class MainActivity : AppCompatActivity() {
                 }
                 if (disconnectedDevice != null) {
                     devices.remove(disconnectedDevice!!)
-                    if (currentDevice == disconnectedDevice)
+                    if (devices.isEmpty()) {
+                        alertDeviceNotConnected()
                         onNoDeviceSelected()
-
+                    }
+                    else {
+                        onDeviceSelected(devices[0])
+                    }
                     runOnUiThread {
                         toast("Потеряно соединение с ${disconnectedDevice!!.name}")
                     }

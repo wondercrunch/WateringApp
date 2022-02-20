@@ -7,6 +7,9 @@ data class Channel (val week1 : Array<Boolean>, val week2 : Array<Boolean>,
                     val dateOn : Calendar, val dateOff : Calendar,
                     val week1SelType : Int, val week2SelType : Int){
 
+    /**
+     * Debug constructor
+     */
     constructor() : this (Array(7){false}, Array(7){false},
                             Calendar.getInstance(), Calendar.getInstance(),
                             0, 0)

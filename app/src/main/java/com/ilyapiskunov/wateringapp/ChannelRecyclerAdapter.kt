@@ -123,13 +123,13 @@ class ChannelRecyclerAdapter(private val channels : ArrayList<Channel>) : Recycl
             Tools.setTimeDecButtonListener(timeOff.btnDecMin, timeOff.editMin)
             Tools.setTimeDecButtonListener(timeOff.btnDecSec, timeOff.editSec)
 
-            Tools.setTimeControlEditListener(timeOn.editHrs, true)
-            Tools.setTimeControlEditListener(timeOn.editMin, false)
-            Tools.setTimeControlEditListener(timeOn.editSec, false)
+            //Tools.setTimeControlEditListener(timeOn.editHrs, true)
+           // Tools.setTimeControlEditListener(timeOn.editMin, false)
+           // Tools.setTimeControlEditListener(timeOn.editSec, false)
 
-            Tools.setTimeControlEditListener(timeOff.editHrs, true)
-            Tools.setTimeControlEditListener(timeOff.editMin, false)
-            Tools.setTimeControlEditListener(timeOff.editSec, false)
+           // Tools.setTimeControlEditListener(timeOff.editHrs, true)
+           // Tools.setTimeControlEditListener(timeOff.editMin, false)
+           // Tools.setTimeControlEditListener(timeOff.editSec, false)
 
         }
 

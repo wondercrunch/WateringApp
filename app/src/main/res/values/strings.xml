@@ -10,5 +10,6 @@
     <string name="menu_device_list">Поиск устройств</string>
     <string name="default_device_address">19:09:30:10:0B:D1</string>
     <string name="delete_channel">Удалить</string>
-    <string name="device_name_holder">Устройство…</string>
+    <string name="device_name_holder">Нет устройств</string>
+    <string name="btnWrite">Записать</string>
 </resources>
