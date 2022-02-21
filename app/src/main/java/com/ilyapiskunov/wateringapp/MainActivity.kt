@@ -74,7 +74,8 @@ class MainActivity : AppCompatActivity() {
             currentDevice?.loadConfig() ?: alertDeviceNotConnected()
         }
 
-
+        //DEBUG
+        channels.add(Channel(Array(7) {false}, Array(7) {false}, Calendar.getInstance(), Calendar.getInstance()))
     }
 
     override fun onDestroy() {

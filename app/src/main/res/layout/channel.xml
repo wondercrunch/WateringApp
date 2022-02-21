@@ -64,7 +64,7 @@
         android:layout_height="wrap_content"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@+id/tvWeek1"
-        app:layout_constraintTop_toBottomOf="@+id/radioSelectDays" />
+        app:layout_constraintTop_toBottomOf="@+id/btnSkipDay" />
 
     <include
         android:id="@+id/days_of_week_2"
@@ -112,38 +112,31 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/time_on" />
 
-    <RadioGroup
-        android:id="@+id/radioSelectDays"
+    <Button
+        android:id="@+id/btnSkipDay"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
         android:padding="5dp"
-        android:paddingHorizontal="10dp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/btnOpen">
-        <RadioButton
-            android:id="@+id/radioCustomDay"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:checked="true"
-            android:text="Выборочно"
-            android:textSize="12sp"
-            />
-        <RadioButton
-            android:id="@+id/radioSkipDay"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Через день"
-            android:textSize="12sp"
-            />
-        <RadioButton
-            android:id="@+id/radioEveryDay"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Каждый день"
-            android:textSize="12sp"
-            />
+        android:layout_marginTop="10dp"
+        android:layout_marginEnd="20dp"
+        android:text="Через день"
+        android:textSize="11sp"
+        style="@style/Widget.AppCompat.Button.Borderless"
+        app:layout_constraintEnd_toStartOf="@id/btnEveryDay"
+        app:layout_constraintTop_toBottomOf="@+id/btnOpen"
+        />
 
-    </RadioGroup>
+    <Button
+        android:id="@+id/btnEveryDay"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:padding="5dp"
+        android:layout_marginEnd="10dp"
+        android:text="Каждый день"
+        android:textSize="11sp"
+        style="@style/Widget.AppCompat.Button.Borderless"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@id/btnSkipDay"
+        />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
