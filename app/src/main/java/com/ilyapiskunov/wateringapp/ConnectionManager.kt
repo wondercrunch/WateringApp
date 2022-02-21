@@ -51,6 +51,7 @@ object ConnectionManager {
             enqueueOperation(Disconnect(device))
     }
 
+
     fun write(device: BluetoothDevice, data : ByteArray) {
         if (deviceGattMap.contains(device))
             enqueueOperation(Write(device, data))
@@ -191,10 +192,12 @@ object ConnectionManager {
         ) {
             if (status == BluetoothGatt.GATT_SUCCESS) {
                 Log.i("BluetoothGattCallback", "write success!")
+                listeners.forEach { ref -> ref.get()?.onWrite?.invoke(gatt!!.device) }
             }
             else {
                 Log.i("BluetoothGattCallback", "write fail: $status")
             }
+
         }
 
         override fun onCharacteristicChanged(

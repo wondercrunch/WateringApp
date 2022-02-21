@@ -1,18 +1,41 @@
 package com.ilyapiskunov.wateringapp
 
+import java.io.ByteArrayInputStream
 import java.util.*
 
 
-data class Channel (val week1 : Array<Boolean>, val week2 : Array<Boolean>,
-                    val dateOn : Calendar, val dateOff : Calendar,
-                    val week1SelType : Int, val week2SelType : Int){
+class Channel (rawData: ByteArrayInputStream) {
 
-    /**
-     * Debug constructor
-     */
-    constructor() : this (Array(7){false}, Array(7){false},
-                            Calendar.getInstance(), Calendar.getInstance(),
-                            0, 0)
+    val week1 : Array<Boolean>
+    val week2 : Array<Boolean>
+    val timeOn : Calendar
+    val timeOff : Calendar
+
+    init {
+        val initWeek: (Int) -> Array<Boolean> = {
+                byte -> Array(7) {
+                            i -> byte and (1 shl i) != 0
+                        }
+        }
+
+        week1 = initWeek(rawData.read())
+        week2 = initWeek(rawData.read())
+
+        val initTime: (ByteArrayInputStream) -> Calendar = {
+                stream ->
+            val hours = stream.read()
+            val minutes = stream.read()
+            val seconds = stream.read()
+            val date = Calendar.getInstance()
+            date.set(Calendar.HOUR, hours)
+            date.set(Calendar.MINUTE, minutes)
+            date.set(Calendar.SECOND, seconds)
+            date
+        }
+
+        timeOn = initTime(rawData)
+        timeOff = initTime(rawData)
+    }
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -22,10 +45,8 @@ data class Channel (val week1 : Array<Boolean>, val week2 : Array<Boolean>,
 
         if (!week1.contentEquals(other.week1)) return false
         if (!week2.contentEquals(other.week2)) return false
-        if (dateOn != other.dateOn) return false
-        if (dateOff != other.dateOff) return false
-        if (week1SelType != other.week1SelType) return false
-        if (week2SelType != other.week2SelType) return false
+        if (timeOn != other.timeOn) return false
+        if (timeOff != other.timeOff) return false
 
         return true
     }
@@ -33,11 +54,10 @@ data class Channel (val week1 : Array<Boolean>, val week2 : Array<Boolean>,
     override fun hashCode(): Int {
         var result = week1.contentHashCode()
         result = 31 * result + week2.contentHashCode()
-        result = 31 * result + dateOn.hashCode()
-        result = 31 * result + dateOff.hashCode()
-        result = 31 * result + week1SelType
-        result = 31 * result + week2SelType
+        result = 31 * result + timeOn.hashCode()
+        result = 31 * result + timeOff.hashCode()
         return result
     }
+
 
 }

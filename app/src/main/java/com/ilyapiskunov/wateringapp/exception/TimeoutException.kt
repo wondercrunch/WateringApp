@@ -1,4 +1,4 @@
 package com.ilyapiskunov.wateringapp.exception
 
-class TimeoutException : Exception() {
+class TimeoutException : Exception("Таймаут ответа устройства") {
 }

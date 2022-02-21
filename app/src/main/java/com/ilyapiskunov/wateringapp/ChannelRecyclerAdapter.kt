@@ -48,13 +48,13 @@ class ChannelRecyclerAdapter(private val channels : ArrayList<Channel>) : Recycl
 
 
 
-        val dateOn : Calendar = channel.dateOn
+        val dateOn : Calendar = channel.timeOn
 
         holder.timeOn.editHrs.setText(dateOn.get(Calendar.HOUR_OF_DAY).toString())
         holder.timeOn.editMin.setText(dateOn.get(Calendar.MINUTE).toString())
         holder.timeOn.editSec.setText(dateOn.get(Calendar.SECOND).toString())
 
-        val dateOff : Calendar = channel.dateOff
+        val dateOff : Calendar = channel.timeOff
         holder.timeOff.editHrs.setText(dateOff.get(Calendar.HOUR_OF_DAY).toString())
         holder.timeOff.editMin.setText(dateOff.get(Calendar.MINUTE).toString())
         holder.timeOff.editSec.setText(dateOff.get(Calendar.SECOND).toString())

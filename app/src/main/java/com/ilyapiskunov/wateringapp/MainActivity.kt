@@ -16,11 +16,9 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import kotlinx.android.synthetic.main.activity_main.*
 import org.jetbrains.anko.alert
 import org.jetbrains.anko.toast
-import java.io.ByteArrayInputStream
 import java.lang.Exception
 import java.util.*
 import java.util.concurrent.*
-import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.collections.ArrayList
 
 class MainActivity : AppCompatActivity() {
@@ -39,11 +37,11 @@ class MainActivity : AppCompatActivity() {
     }
 
 
-    private var currentDevice : Device? = null
+    private var currentDevice : SprinklerDevice? = null
     private val channels = ArrayList<Channel>()
     private val channelsAdapter = ChannelRecyclerAdapter(channels)
     private val replyQueue = LinkedBlockingQueue<ByteArray>()
-    private val devices : LinkedList<Device> = LinkedList()
+    private val devices : LinkedList<SprinklerDevice> = LinkedList()
     private lateinit var currentMenuItem: MenuItem
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -141,7 +139,7 @@ class MainActivity : AppCompatActivity() {
 
 
 
-    private fun onDeviceSelected(device: Device) {
+    private fun onDeviceSelected(device: SprinklerDevice) {
         runOnUiThread {
             currentDevice = device
             currentMenuItem.title = device.name
@@ -190,38 +188,36 @@ class MainActivity : AppCompatActivity() {
         ConnectionEventListener().apply {
             onConnectionSetupComplete = {
                 bluetoothDevice ->
-                try {
-                    val connectedDevice = Device(bluetoothDevice)
-                    devices.add(connectedDevice)
-                    onDeviceSelected(connectedDevice)
-
-                    runOnUiThread {
+                    try {
+                        val connectedDevice = SprinklerDevice(bluetoothDevice)
+                        devices.add(connectedDevice)
+                        onDeviceSelected(connectedDevice)
                         toast("Установлено соединение с ${connectedDevice.name}")
+
+                    } catch (e: Exception) {
+                        alertError(e.message)
+                        ConnectionManager.disconnect(bluetoothDevice)
                     }
-                } catch (e : Exception) {
-                    alertError(e.message)
-                    ConnectionManager.disconnect(bluetoothDevice)
-                }
+
             }
             onDisconnect = {
                 bluetoothDevice ->
-                var disconnectedDevice : Device? = null
-                devices.forEach {
-                    if (it.bluetoothDevice == bluetoothDevice) disconnectedDevice = it
-                }
-                if (disconnectedDevice != null) {
-                    devices.remove(disconnectedDevice!!)
-                    if (devices.isEmpty()) {
-                        alertDeviceNotConnected()
-                        onNoDeviceSelected()
+                    var disconnectedDevice : SprinklerDevice? = null
+                    devices.forEach {
+                        if (it.bluetoothDevice == bluetoothDevice) disconnectedDevice = it
                     }
-                    else {
-                        onDeviceSelected(devices[0])
-                    }
-                    runOnUiThread {
+                    if (disconnectedDevice != null) {
+                        devices.remove(disconnectedDevice!!)
                         toast("Потеряно соединение с ${disconnectedDevice!!.name}")
+                        if (devices.isEmpty()) {
+                            alertDeviceNotConnected()
+                            onNoDeviceSelected()
+                        }
+                        else {
+                            onDeviceSelected(devices[0])
+                        }
+
                     }
-                }
             }
         }
     }
