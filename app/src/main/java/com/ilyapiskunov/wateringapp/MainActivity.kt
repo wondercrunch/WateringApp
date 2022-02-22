@@ -75,7 +75,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         //DEBUG
-        channels.add(Channel(Array(7) {false}, Array(7) {false}, Calendar.getInstance(), Calendar.getInstance()))
+        channels.add(Channel(Array(7) {false}, Array(7) {false}, AlarmTime(0, 0, 0), AlarmTime(0, 0, 0)))
     }
 
     override fun onDestroy() {

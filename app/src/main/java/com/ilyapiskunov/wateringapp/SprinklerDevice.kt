@@ -67,29 +67,11 @@ class SprinklerDevice(val bluetoothDevice : BluetoothDevice) {
             channelStream.read() //skip channels count
             channels = List(channelsCount) {
 
-                val initWeek: (Int) -> Array<Boolean> = {
-                        byte -> Array(7) {
-                        i -> byte and (1 shl i) != 0
-                }
-                }
+                val week1 = readWeek(channelStream)
+                val week2 = readWeek(channelStream)
 
-                val week1 = initWeek(channelStream.read())
-                val week2 = initWeek(channelStream.read())
-
-                val initTime: (ByteArrayInputStream) -> Calendar = {
-                        stream ->
-                    val hours = stream.read()
-                    val minutes = stream.read()
-                    val seconds = stream.read()
-                    val date = Calendar.getInstance()
-                    date.set(Calendar.HOUR_OF_DAY, hours)
-                    date.set(Calendar.MINUTE, minutes)
-                    date.set(Calendar.SECOND, seconds)
-                    date
-                }
-
-                val timeOn = initTime(channelStream)
-                val timeOff = initTime(channelStream)
+                val timeOn = readTime(channelStream)
+                val timeOff = readTime(channelStream)
 
                 Channel(week1, week2, timeOn, timeOff)
             }
@@ -128,20 +110,16 @@ class SprinklerDevice(val bluetoothDevice : BluetoothDevice) {
     }
 }
 
-fun getWeek(stream : ByteArrayInputStream) : Array<Boolean> {
+fun readWeek(stream : ByteArrayInputStream) : Array<Boolean> {
     val weekByte = stream.read()
     return Array(7) {
                 i -> weekByte and (1 shl i) != 0
             }
 }
 
-fun getTime(stream : ByteArrayInputStream) : Calendar {
+fun readTime(stream : ByteArrayInputStream) : AlarmTime {
     val hours = stream.read()
     val minutes = stream.read()
     val seconds = stream.read()
-    val date = Calendar.getInstance()
-    date.set(Calendar.HOUR, hours)
-    date.set(Calendar.MINUTE, minutes)
-    date.set(Calendar.SECOND, seconds)
-    return date
+    return AlarmTime(hours, minutes, seconds)
 }

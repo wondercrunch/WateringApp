@@ -6,8 +6,8 @@ import java.util.*
 
 class Channel (val week1 : Array<Boolean>,
                val week2 : Array<Boolean>,
-               var timeOn : Calendar,
-               var timeOff : Calendar) {
+               var timeOn : AlarmTime,
+               var timeOff : AlarmTime) {
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -30,6 +30,5 @@ class Channel (val week1 : Array<Boolean>,
         result = 31 * result + timeOff.hashCode()
         return result
     }
-
 
 }

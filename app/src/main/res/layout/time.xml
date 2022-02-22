@@ -8,16 +8,18 @@
     android:id="@+id/timeBox">
 
     <EditText
+
         android:id="@+id/editHrs"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:ems="2"
-        android:inputType="number"
+        android:inputType="none"
         android:maxLength="2"
         android:selectAllOnFocus="true"
         android:text="00"
         android:textAlignment="center"
         android:textSize="20sp"
+        android:focusable="false"
         app:layout_constraintBottom_toBottomOf="@+id/btnDecHrs"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="@+id/btnIncHrs" />
@@ -43,12 +45,13 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:ems="2"
-        android:inputType="number"
+        android:inputType="none"
         android:maxLength="2"
         android:selectAllOnFocus="true"
         android:text="00"
         android:textAlignment="center"
         android:textSize="20sp"
+        android:focusable="false"
         app:layout_constraintBottom_toBottomOf="@+id/btnDecMin"
         app:layout_constraintStart_toEndOf="@+id/btnIncHrs"
         app:layout_constraintTop_toTopOf="@+id/btnIncMin" />
@@ -74,9 +77,9 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:ems="2"
-        android:inputType="number"
+        android:inputType="none"
         android:maxLength="2"
-        android:selectAllOnFocus="true"
+        android:focusable="false"
         android:text="00"
         android:textAlignment="center"
         android:textSize="20sp"
