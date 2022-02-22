@@ -1,6 +1,5 @@
 package com.ilyapiskunov.wateringapp
 
-import com.ilyapiskunov.wateringapp.Tools.modNeg
 
 data class AlarmTime(var hours : Int, var minutes: Int, var seconds : Int) {
 
@@ -13,15 +12,15 @@ data class AlarmTime(var hours : Int, var minutes: Int, var seconds : Int) {
     private fun changeValue(field : TimeField, inc : Int) : Int {
         return when (field) {
             TimeField.HOURS -> {
-                hours = (hours + inc).modNeg(24)
+                hours = (hours + inc).mod(24)
                 hours
             }
             TimeField.MINUTES -> {
-                minutes = (minutes + inc).modNeg(60)
+                minutes = (minutes + inc).mod(60)
                 minutes
             }
             TimeField.SECONDS -> {
-                seconds = (seconds + inc).modNeg(60)
+                seconds = (seconds + inc).mod(60)
                 seconds
             }
         }
