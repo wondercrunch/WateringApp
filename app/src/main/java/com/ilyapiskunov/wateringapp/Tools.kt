@@ -13,7 +13,6 @@ import org.jetbrains.anko.alert
 
 object Tools {
 
-    private val repeatListener = RepeatListener(true, 200, 35);
 
 
     class RepeatListener(private val immediateClick: Boolean, private val interval: Int, private val intervalAcceleration: Int) :
@@ -91,6 +90,7 @@ object Tools {
             hrs = if (isInc) ++hrs else --hrs
             editTime.setText(hrs.toString())
         }
+        val repeatListener = RepeatListener(true, 200, 35);
 
         btn.setOnTouchListener(repeatListener)
 

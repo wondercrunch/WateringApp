@@ -4,38 +4,10 @@ import java.io.ByteArrayInputStream
 import java.util.*
 
 
-class Channel (rawData: ByteArrayInputStream) {
-
-    val week1 : Array<Boolean>
-    val week2 : Array<Boolean>
-    val timeOn : Calendar
-    val timeOff : Calendar
-
-    init {
-        val initWeek: (Int) -> Array<Boolean> = {
-                byte -> Array(7) {
-                            i -> byte and (1 shl i) != 0
-                        }
-        }
-
-        week1 = initWeek(rawData.read())
-        week2 = initWeek(rawData.read())
-
-        val initTime: (ByteArrayInputStream) -> Calendar = {
-                stream ->
-            val hours = stream.read()
-            val minutes = stream.read()
-            val seconds = stream.read()
-            val date = Calendar.getInstance()
-            date.set(Calendar.HOUR, hours)
-            date.set(Calendar.MINUTE, minutes)
-            date.set(Calendar.SECOND, seconds)
-            date
-        }
-
-        timeOn = initTime(rawData)
-        timeOff = initTime(rawData)
-    }
+class Channel (val week1 : Array<Boolean>,
+               val week2 : Array<Boolean>,
+               var timeOn : Calendar,
+               var timeOff : Calendar) {
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

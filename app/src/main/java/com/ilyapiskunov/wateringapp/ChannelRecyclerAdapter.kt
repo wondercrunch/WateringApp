@@ -4,7 +4,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.*
-import androidx.core.view.children
 import androidx.core.view.get
 import androidx.recyclerview.widget.RecyclerView
 import kotlinx.android.synthetic.main.channel.view.*
@@ -30,22 +29,32 @@ class ChannelRecyclerAdapter(private val channels : ArrayList<Channel>) : Recycl
             val dayOfWeek1 : ToggleButton = holder.daysOfWeek1[i] as ToggleButton
             dayOfWeek1.isChecked = channel.week1[i]
             dayOfWeek1.setOnClickListener {
-                if (holder.radioSelectDays.checkedRadioButtonId != R.id.radioCustomDay) {
-                    holder.radioSelectDays.check(R.id.radioCustomDay)
-                    dayOfWeek1.isChecked = !dayOfWeek1.isChecked
-                }
+                channel.week1[i] = !channel.week1[i]
+                notifyItemChanged(position)
             }
 
             val dayOfWeek2 = holder.daysOfWeek2[i] as ToggleButton
             dayOfWeek2.isChecked = channel.week2[i]
             dayOfWeek2.setOnClickListener {
-                if (holder.radioSelectDays.checkedRadioButtonId != R.id.radioCustomDay) {
-                    holder.radioSelectDays.check(R.id.radioCustomDay)
-                    dayOfWeek2.isChecked = !dayOfWeek2.isChecked
-                }
+                channel.week2[i] = !channel.week2[i]
+                notifyItemChanged(position)
             }
         }
 
+        holder.btnEveryDay.setOnClickListener {
+            channel.week1.fill(true)
+            channel.week2.fill(true)
+            notifyItemChanged(position)
+        }
+
+        holder.btnSkipDay.setOnClickListener {
+            for (i in 0..6) {
+                val isEven = i % 2 == 0
+                channel.week1[i] = isEven
+                channel.week2[i] = !isEven
+            }
+            notifyItemChanged(position)
+        }
 
 
         val dateOn : Calendar = channel.timeOn
@@ -66,7 +75,8 @@ class ChannelRecyclerAdapter(private val channels : ArrayList<Channel>) : Recycl
         var tvChannelId : TextView = itemView.name
         val btnOpen : Button = itemView.btnOpen
         val btnClose : Button = itemView.btnClose
-        var radioSelectDays : RadioGroup = itemView.radioSelectDays
+        var btnSkipDay : Button = itemView.btnSkipDay
+        var btnEveryDay : Button = itemView.btnEveryDay
         val tvWeek1 : TextView = itemView.tvWeek1
         val tvWeek2 : TextView = itemView.tvWeek2
         var daysOfWeek1 : LinearLayout = itemView.days_of_week_1 as LinearLayout
@@ -80,34 +90,6 @@ class ChannelRecyclerAdapter(private val channels : ArrayList<Channel>) : Recycl
 
         init {
 
-
-            radioSelectDays.setOnCheckedChangeListener { group, checkedId ->
-                when (checkedId) {
-                    R.id.radioEveryDay -> {
-                        daysOfWeek1.children.forEach { view: View ->
-                            (view as ToggleButton).isChecked = true
-                        }
-
-                        daysOfWeek2.children.forEach { view: View ->
-                            (view as ToggleButton).isChecked = true
-                        }
-                    }
-
-                    R.id.radioSkipDay -> {
-                        for (i in 0..6) {
-                            if (i % 2 == 0) {
-                                (daysOfWeek1[i] as ToggleButton).isChecked = true
-                                (daysOfWeek2[i] as ToggleButton).isChecked = false
-                            } else {
-                                (daysOfWeek1[i] as ToggleButton).isChecked = false
-                                (daysOfWeek2[i] as ToggleButton).isChecked = true
-                            }
-                        }
-                    }
-
-                }
-
-            }
 
             Tools.setTimeIncButtonListener(timeOn.btnIncHrs, timeOn.editHrs)
             Tools.setTimeIncButtonListener(timeOn.btnIncMin, timeOn.editMin)
@@ -123,14 +105,13 @@ class ChannelRecyclerAdapter(private val channels : ArrayList<Channel>) : Recycl
             Tools.setTimeDecButtonListener(timeOff.btnDecMin, timeOff.editMin)
             Tools.setTimeDecButtonListener(timeOff.btnDecSec, timeOff.editSec)
 
-            //Tools.setTimeControlEditListener(timeOn.editHrs, true)
-           // Tools.setTimeControlEditListener(timeOn.editMin, false)
-           // Tools.setTimeControlEditListener(timeOn.editSec, false)
+            Tools.setTimeControlEditListener(timeOn.editHrs, true)
+            Tools.setTimeControlEditListener(timeOn.editMin, false)
+            Tools.setTimeControlEditListener(timeOn.editSec, false)
 
-           // Tools.setTimeControlEditListener(timeOff.editHrs, true)
-           // Tools.setTimeControlEditListener(timeOff.editMin, false)
-           // Tools.setTimeControlEditListener(timeOff.editSec, false)
-
+            Tools.setTimeControlEditListener(timeOff.editHrs, true)
+            Tools.setTimeControlEditListener(timeOff.editMin, false)
+            Tools.setTimeControlEditListener(timeOff.editSec, false)
         }
 
 

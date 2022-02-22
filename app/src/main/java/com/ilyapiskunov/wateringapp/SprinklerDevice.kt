@@ -66,7 +66,32 @@ class SprinklerDevice(val bluetoothDevice : BluetoothDevice) {
             val channelStream = ByteArrayInputStream(channelsResponse.data)
             channelStream.read() //skip channels count
             channels = List(channelsCount) {
-                Channel(channelStream)
+
+                val initWeek: (Int) -> Array<Boolean> = {
+                        byte -> Array(7) {
+                        i -> byte and (1 shl i) != 0
+                }
+                }
+
+                val week1 = initWeek(channelStream.read())
+                val week2 = initWeek(channelStream.read())
+
+                val initTime: (ByteArrayInputStream) -> Calendar = {
+                        stream ->
+                    val hours = stream.read()
+                    val minutes = stream.read()
+                    val seconds = stream.read()
+                    val date = Calendar.getInstance()
+                    date.set(Calendar.HOUR_OF_DAY, hours)
+                    date.set(Calendar.MINUTE, minutes)
+                    date.set(Calendar.SECOND, seconds)
+                    date
+                }
+
+                val timeOn = initTime(channelStream)
+                val timeOff = initTime(channelStream)
+
+                Channel(week1, week2, timeOn, timeOff)
             }
         }
     }
