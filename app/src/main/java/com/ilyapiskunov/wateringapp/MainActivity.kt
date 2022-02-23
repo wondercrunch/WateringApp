@@ -30,7 +30,6 @@ class MainActivity : AppCompatActivity() {
     val REQUEST_CONNECT_DEVICE = 2
     val REQUEST_GET_PERMISSION = 3
 
-    val commandExecutor : ExecutorService = Executors.newSingleThreadExecutor()
 
     companion object {
         val EXTRA_ADDRESS: String = "Device_address"
@@ -39,7 +38,7 @@ class MainActivity : AppCompatActivity() {
 
     private var currentDevice : SprinklerDevice? = null
     private val channels = ArrayList<Channel>()
-    private val channelsAdapter = ChannelRecyclerAdapter(channels)
+    private val channelsAdapter = ChannelRecyclerAdapter(channels, currentDevice)
     private val replyQueue = LinkedBlockingQueue<ByteArray>()
     private val devices : LinkedList<SprinklerDevice> = LinkedList()
     private lateinit var currentMenuItem: MenuItem
@@ -80,7 +79,6 @@ class MainActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
-        commandExecutor.shutdown()
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
@@ -185,12 +183,26 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private val deviceEventListener by lazy {
+        DeviceEventListener().apply {
+            onCommandSuccess = {
+                toast("OK")
+            }
+
+            onCommandError = {
+                exception ->
+                alertError(exception.message)
+            }
+        }
+    }
+
+
     private val connectionEventListener by lazy {
         ConnectionEventListener().apply {
             onConnectionSetupComplete = {
                 bluetoothDevice ->
                     try {
-                        val connectedDevice = SprinklerDevice(bluetoothDevice)
+                        val connectedDevice = SprinklerDevice(bluetoothDevice, deviceEventListener)
                         devices.add(connectedDevice)
                         onDeviceSelected(connectedDevice)
                         toast("Установлено соединение с ${connectedDevice.name}")

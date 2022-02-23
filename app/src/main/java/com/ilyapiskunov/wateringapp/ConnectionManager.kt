@@ -9,6 +9,7 @@ import android.os.Handler
 import android.os.Looper
 import android.util.Log
 import com.ilyapiskunov.wateringapp.Tools.toHex
+import com.ilyapiskunov.wateringapp.exception.ConnectionException
 import java.lang.ref.WeakReference
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
@@ -55,6 +56,7 @@ object ConnectionManager {
     fun write(device: BluetoothDevice, data : ByteArray) {
         if (deviceGattMap.contains(device))
             enqueueOperation(Write(device, data))
+        else throw ConnectionException()
     }
 
     @Synchronized

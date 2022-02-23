@@ -15,9 +15,10 @@ import androidx.core.view.get
 import androidx.recyclerview.widget.RecyclerView
 import kotlinx.android.synthetic.main.channel.view.*
 import kotlinx.android.synthetic.main.time.view.*
+import org.jetbrains.anko.async
 import java.util.*
 
-class ChannelRecyclerAdapter(private val channels : ArrayList<Channel>) : RecyclerView.Adapter<ChannelRecyclerAdapter.ChannelViewHolder>() {
+class ChannelRecyclerAdapter(private val channels : ArrayList<Channel>, val currentDevice : SprinklerDevice?) : RecyclerView.Adapter<ChannelRecyclerAdapter.ChannelViewHolder>() {
 
 
 
@@ -91,13 +92,13 @@ class ChannelRecyclerAdapter(private val channels : ArrayList<Channel>) : Recycl
         setTimeControlButtonListener(holderTimeOff.btnDecMin, holderTimeOff.editMin, position) {timeOff.decMinutes() }
         setTimeControlButtonListener(holderTimeOff.btnDecSec, holderTimeOff.editSec, position) {timeOff.decSeconds() }
 
-      //  setTimeControlEditListener(timeOn.editHrs, true)
-      //  setTimeControlEditListener(timeOn.editMin, false)
-      //  setTimeControlEditListener(timeOn.editSec, false)
+        holder.btnOpen.setOnClickListener {
+            currentDevice?.toggleChannel(true, position)
+        }
 
-       // setTimeControlEditListener(timeOff.editHrs, true)
-       // setTimeControlEditListener(timeOff.editMin, false)
-        //setTimeControlEditListener(timeOff.editSec, false)
+        holder.btnClose.setOnClickListener {
+            currentDevice?.toggleChannel(false, position)
+        }
     }
 
 

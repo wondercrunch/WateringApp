@@ -1,8 +1,14 @@
 package com.ilyapiskunov.wateringapp
 
 import android.bluetooth.BluetoothDevice
+import android.os.Handler
+import android.os.Looper
 import com.ilyapiskunov.wateringapp.exception.ConnectionException
 import com.ilyapiskunov.wateringapp.exception.TimeoutException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import java.io.ByteArrayInputStream
 import java.nio.charset.StandardCharsets
 import java.util.*
@@ -11,19 +17,24 @@ import java.util.concurrent.BlockingQueue
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.ReentrantLock
+import kotlin.coroutines.CoroutineContext
 
 const val MIN_RESPONSE_SIZE = 4
 const val CMD_READ_CONFIG = 0x86
 const val CMD_IDENTIFY = 0x8A
 const val CMD_GET_STATE = 0x6E
+const val CMD_RF_ON = 0x68
+const val CMD_RF_OFF = 0x6A
 const val DEFAULT_TIMEOUT = 4000L
-class SprinklerDevice(val bluetoothDevice : BluetoothDevice) {
+class SprinklerDevice(val bluetoothDevice : BluetoothDevice, val deviceListener : DeviceEventListener) {
     val waterLevel : Int
     val voltage : Float
     val name : String
+
     private val responseQueue : BlockingQueue<Response> = LinkedBlockingQueue()
     private val lock = ReentrantLock()
     private val writeCondition = lock.newCondition()
+    private val scope = CoroutineScope(Dispatchers.IO)
 
     private val eventListener : ConnectionEventListener = ConnectionEventListener().apply {
         onRead = {
@@ -105,8 +116,28 @@ class SprinklerDevice(val bluetoothDevice : BluetoothDevice) {
         return getResponse(DEFAULT_TIMEOUT)
     }
 
+    private fun runCommand(command: suspend () -> Unit) {
+        scope.launch(Dispatchers.IO) {
+            try {
+                command()
+                deviceListener.onCommandSuccess.invoke()
+            } catch (e : Exception) {
+                deviceListener.onCommandError.invoke(e)
+            }
+        }
+    }
+
     fun loadConfig() {
 
+    }
+
+    fun toggleChannel(on : Boolean, channel: Int) {
+        runCommand {
+            val cmd =
+            CommandPacket(if (on) CMD_RF_ON else CMD_RF_OFF).addByte(channel).toByteArray()
+            write(cmd)
+            getResponse().checkStatus()
+        }
     }
 }
 
