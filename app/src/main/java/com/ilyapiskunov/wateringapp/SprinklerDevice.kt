@@ -15,13 +15,12 @@ import java.util.concurrent.BlockingQueue
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit
 
-const val MIN_RESPONSE_SIZE = 4
 const val CMD_READ_CONFIG = 0x86
 const val CMD_IDENTIFY = 0x8A
 const val CMD_GET_STATE = 0x6E
 const val CMD_RF_ON = 0x68
 const val CMD_RF_OFF = 0x6A
-const val DEFAULT_TIMEOUT = 4000L
+const val DEFAULT_TIMEOUT = 1000L
 class SprinklerDevice(val bluetoothDevice : BluetoothDevice, val deviceListener : DeviceEventListener) {
     val waterLevel : Int
     val voltage : Float
@@ -41,6 +40,7 @@ class SprinklerDevice(val bluetoothDevice : BluetoothDevice, val deviceListener 
                 try {
                     responseReader.handle(payload)
                 } catch (e : Exception) {
+                    responseReader.reset()
                     e.printStackTrace()
                 }
             }
@@ -149,41 +149,58 @@ class SprinklerDevice(val bluetoothDevice : BluetoothDevice, val deviceListener 
         }
     }
 
-    private val responseReader = ResponseReader()
+    private val responseReader = ResponseReader(responseQueue)
 
-    private class ResponseReader {
+    private class ResponseReader(val responseQueue: BlockingQueue<Response>) {
         private enum class State {
             WAITING,
             PREFIX_RECEIVED,
-            CRC_RECEIVED
+            DATA_RECEIVED
         }
         private val PREFIX_LENGTH = 3
         private var state = State.WAITING
-        private var buffer = ArrayList<Byte>()
+        private var buffer = ByteArray(PREFIX_LENGTH)
         private var dataLength = 0
+        private var insertIndex = 0
 
         fun handle(payload : ByteArray) {
             val bytes = ByteArrayInputStream(payload)
             while (bytes.available() > 0) {
+                buffer[insertIndex++] = bytes.read().toByte()
                 when (state) {
                     State.WAITING -> {
-                        buffer.add(bytes.read().toByte())
-                        if (buffer.size == PREFIX_LENGTH) {
+                        if (insertIndex == PREFIX_LENGTH) {
                             dataLength = buffer[2].toInt()
+                            buffer = buffer.copyOf(4 + dataLength)
                             state = State.PREFIX_RECEIVED
                         }
                     }
                     State.PREFIX_RECEIVED -> {
-                        buffer.add(bytes.read().toByte())
-                        if (dataLength == 0) {
-                            val crc = bytes.read().toByte()
-
+                        if (insertIndex == buffer.size) {
+                            val crc = buffer[buffer.size-1]
+                            val calculatedCrc = CRCUtils.getCRC8(buffer, buffer.size-1).toByte()
+                            val status = if (crc != calculatedCrc) 0x03 else buffer[1]
+                            val data = if (dataLength == 0) byteArrayOf() else buffer.copyOfRange(3, 3 + dataLength)
+                            responseQueue.put(Response(status.toInt(), data))
+                            reset()
                         }
                     }
-                    State.CRC_RECEIVED -> TODO()
+
+                    State.DATA_RECEIVED -> {
+                        //calc crc?
+                    }
                 }
             }
         }
+
+        fun reset() {
+            state = State.WAITING
+            insertIndex = 0
+            dataLength = 0
+            buffer = ByteArray(PREFIX_LENGTH)
+        }
+
+
     }
 
 }
