@@ -2,6 +2,7 @@ package com.ilyapiskunov.wateringapp
 
 import android.bluetooth.BluetoothDevice
 import android.content.Context
+import com.ilyapiskunov.wateringapp.Tools.toHex
 
 sealed class Operation {
     abstract val device : BluetoothDevice
@@ -29,4 +30,10 @@ data class Write(override val device: BluetoothDevice, val data : ByteArray) : O
         result = 31 * result + data.contentHashCode()
         return result
     }
+
+    override fun toString(): String {
+        return "Write(device=$device, data=${data.toHex()})"
+    }
+
+
 }

@@ -1,5 +1,7 @@
 package com.ilyapiskunov.wateringapp;
 
+import android.util.Log;
+
 import java.util.zip.Checksum;
 
 class CRCUtils {
@@ -10,6 +12,7 @@ class CRCUtils {
     public static int getCRC8(byte[] data, int length) {
         CRC8 crc8 = new CRC8(CRC8_POLYNOMIAL, CRC8_PRESET_VALUE);
         crc8.update(data, 0, length);
+        //Log.i("CRC", "CRC = " + Long.toHexString(crc8.getValue()));
         return (int) crc8.getValue();
     }
 

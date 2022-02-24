@@ -18,7 +18,8 @@ import java.util.concurrent.ConcurrentLinkedQueue
 object ConnectionManager {
 
     private val TAG = "ConnectionManager"
-    private var listeners : LinkedList<WeakReference<ConnectionEventListener>> = LinkedList()
+    private var connectionListeners : LinkedList<WeakReference<ConnectionEventListener>> = LinkedList()
+    private var ioListeners : LinkedList<WeakReference<ConnectionEventListener>> = LinkedList()
     var isConnected = false
     private val operationQueue = ConcurrentLinkedQueue<Operation>()
     private var pendingOperation : Operation? = null
@@ -28,39 +29,58 @@ object ConnectionManager {
     private val serialServiceUUID = UUID.fromString(SERIAL_SERVICE_UUID)
     private val serialCharUUID = UUID.fromString(SERIAL_CHARACTERISTIC_UUID)
 
-    fun registerListener(listener: ConnectionEventListener) {
-        if (listeners.map { it.get() }.contains(listener)) return
-        listeners.add(WeakReference(listener))
+    enum class ListenerType {
+        CONNECTION,
+        IO
+    }
+
+    fun registerListener(listener: ConnectionEventListener, type : ListenerType) {
+        when (type) {
+            ListenerType.CONNECTION -> {
+                if (connectionListeners.map { it.get() }.contains(listener)) return
+                connectionListeners.add(WeakReference(listener))
+            }
+            ListenerType.IO -> {
+                if (ioListeners.map { it.get() }.contains(listener)) return
+                ioListeners.add(WeakReference(listener))
+            }
+        }
 
     }
 
     fun unregisterListener(listener: ConnectionEventListener) {
         var refToRemove : WeakReference<ConnectionEventListener>? = null
-        listeners.forEach{ ref -> if (ref.get() == listener) {
+        connectionListeners.forEach{ ref -> if (ref.get() == listener) {
             refToRemove = ref
         } }
-        listeners.remove(refToRemove)
+        connectionListeners.remove(refToRemove)
     }
 
     fun connect(device : BluetoothDevice, context : Context) {
-        if (!deviceGattMap.contains(device))
+        if (deviceGattMap[device] == null)
             enqueueOperation(Connect(device, context))
     }
 
     fun disconnect(device: BluetoothDevice) {
-        if (deviceGattMap.contains(device))
+        if (deviceGattMap[device] != null)
             enqueueOperation(Disconnect(device))
     }
 
 
     fun write(device: BluetoothDevice, data : ByteArray) {
-        if (deviceGattMap.contains(device))
+        if (deviceGattMap[device] != null) {
             enqueueOperation(Write(device, data))
-        else throw ConnectionException()
+        }
+        else {
+            deviceGattMap.forEach { entry -> Log.i("ConnectionManager", "Device: ${entry.key.address}") }
+            Log.i("ConnectionManager", "No ${device.address} in map!")
+            throw ConnectionException()
+        }
     }
 
     @Synchronized
     private fun enqueueOperation(operation: Operation) {
+        Log.i("ConnectionManager", "Enqueueing operation: $operation")
         operationQueue.add(operation)
         if (pendingOperation == null) {
             nextOperation()
@@ -84,6 +104,7 @@ object ConnectionManager {
         pendingOperation = operation
 
         if (operation is Connect) {
+            Log.i("ConnectionManager", "Executing operation Connect")
             with(operation) {
                 device.connectGatt(context, false, callback)
             }
@@ -94,13 +115,14 @@ object ConnectionManager {
             signalEndOfOperation()
             return
         }
-
+        Log.i("ConnectionManager", "Executing operation: $operation")
         when (operation) {
+
             is Disconnect -> with(operation) {
                 Log.i(TAG, "Disconnecting from ${device.name}")
                 gatt.close()
                 deviceGattMap.remove(device)
-                listeners.forEach { ref -> ref.get()?.onDisconnect?.invoke(device) }
+                connectionListeners.forEach { ref -> ref.get()?.onDisconnect?.invoke(device) }
                 signalEndOfOperation()
             }
 
@@ -131,15 +153,18 @@ object ConnectionManager {
                     }
 
 
-                } else {
+                } else if (newState == BluetoothGatt.STATE_DISCONNECTED) {
                     Log.i("BluetoothGattCallback", "Disconnected from $deviceAddress")
-                    gatt.close()
+                    disconnect(gatt.device)
                     //bluetoothGatt = null
                 }
             }
             else {
                 Log.i("BluetoothGattCallback", "Connection error with $deviceAddress: $status")
-                gatt.close()
+                if (pendingOperation is Connect) {
+                    signalEndOfOperation()
+                }
+                disconnect(gatt.device)
                 //bluetoothGatt = null
             }
 
@@ -156,7 +181,7 @@ object ConnectionManager {
                     //gatt.readCharacteristic(gatt.getService(appServiceUUID).getCharacteristic(appCharUUID))
                     val notificationEnabled = setCharacteristicNotification(serialCharacteristic, true)
                     if (notificationEnabled) {
-                        requestMtu(128)
+                        requestMtu(90)
                         return
                     }
                 }
@@ -176,7 +201,7 @@ object ConnectionManager {
         override fun onMtuChanged(gatt: BluetoothGatt?, mtu: Int, status: Int) {
             Log.i("BluetoothGattCallback", "MTU chaged to $mtu, success:${status == BluetoothGatt.GATT_SUCCESS}")
             if (status == BluetoothGatt.GATT_SUCCESS) {
-                listeners.forEach { ref -> ref.get()?.onConnectionSetupComplete?.invoke(gatt!!.device) }
+                connectionListeners.forEach { ref -> ref.get()?.onConnectionSetupComplete?.invoke(gatt!!.device) }
             }
             else {
                 Log.i("BluetoothGattCallback", "Error in MTU change request")
@@ -194,7 +219,7 @@ object ConnectionManager {
         ) {
             if (status == BluetoothGatt.GATT_SUCCESS) {
                 Log.i("BluetoothGattCallback", "write success!")
-                listeners.forEach { ref -> ref.get()?.onWrite?.invoke(gatt!!.device) }
+                ioListeners.forEach { ref -> ref.get()?.onWrite?.invoke(gatt!!.device) }
             }
             else {
                 Log.i("BluetoothGattCallback", "write fail: $status")
@@ -210,7 +235,7 @@ object ConnectionManager {
                 Log.i("BluetoothGattCallback", "characteristic $uuid changed, new value = ${value.toHex()}")
                 if (uuid == serialCharUUID) {
                     //replyQueue.put(value)
-                    listeners.forEach { ref -> ref.get()?.onRead?.invoke(gatt.device, value) }
+                    ioListeners.forEach { ref -> ref.get()?.onRead?.invoke(gatt.device, value) }
                 }
             }
         }

@@ -14,6 +14,9 @@ import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import kotlinx.android.synthetic.main.activity_main.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import org.jetbrains.anko.alert
 import org.jetbrains.anko.toast
 import java.lang.Exception
@@ -38,21 +41,20 @@ class MainActivity : AppCompatActivity() {
 
     private var currentDevice : SprinklerDevice? = null
     private val channels = ArrayList<Channel>()
-    private val channelsAdapter = ChannelRecyclerAdapter(channels, currentDevice)
+    private val channelsAdapter = ChannelRecyclerAdapter(channels)
     private val replyQueue = LinkedBlockingQueue<ByteArray>()
     private val devices : LinkedList<SprinklerDevice> = LinkedList()
-    private lateinit var currentMenuItem: MenuItem
+    private lateinit var menuSelectDevice: MenuItem
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        ConnectionManager.registerListener(connectionEventListener)
+        ConnectionManager.registerListener(connectionEventListener, ConnectionManager.ListenerType.CONNECTION)
         ModelPreferencesManager.with(this)
         setContentView(R.layout.activity_main)
         //Log.i(TAG, "Channels size: " + channels.size)
         listChannels.adapter = channelsAdapter
         listChannels.layoutManager = LinearLayoutManager(this)
         //listChannels.setHasFixedSize(true)
-
         val separator = DividerItemDecoration(this, LinearLayout.VERTICAL)
         separator.setDrawable(ContextCompat.getDrawable(this, R.drawable.divider)!!)
         listChannels.addItemDecoration(separator)
@@ -86,10 +88,14 @@ class MainActivity : AppCompatActivity() {
         return true
     }
 
+    override fun onPrepareOptionsMenu(menu: Menu?): Boolean {
+        menuSelectDevice = menu?.findItem(R.id.current_device)!!
+        return super.onPrepareOptionsMenu(menu)
+    }
+
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         val id = item.itemId
         if (id == R.id.current_device) {
-            currentMenuItem = item
             if (devices.isNotEmpty()) {
                 val deviceDialogBuilder = AlertDialog.Builder(this)
                 deviceDialogBuilder.setItems(devices.map { device -> device.name }
@@ -141,7 +147,8 @@ class MainActivity : AppCompatActivity() {
     private fun onDeviceSelected(device: SprinklerDevice) {
         runOnUiThread {
             currentDevice = device
-            currentMenuItem.title = device.name
+            channelsAdapter.setCurrentDevice(device)
+            menuSelectDevice.title = device.name
             channels.clear()
             channels.addAll(device.channels)
             channelsAdapter.notifyDataSetChanged()
@@ -153,7 +160,8 @@ class MainActivity : AppCompatActivity() {
     private fun onNoDeviceSelected() {
         runOnUiThread {
             currentDevice = null
-            currentMenuItem.setTitle(R.string.device_name_holder)
+            channelsAdapter.setCurrentDevice(null)
+            menuSelectDevice.setTitle(R.string.device_name_holder)
             channels.clear()
             channelsAdapter.notifyDataSetChanged()
         }
@@ -201,16 +209,19 @@ class MainActivity : AppCompatActivity() {
         ConnectionEventListener().apply {
             onConnectionSetupComplete = {
                 bluetoothDevice ->
+                CoroutineScope(Dispatchers.IO).launch {
                     try {
                         val connectedDevice = SprinklerDevice(bluetoothDevice, deviceEventListener)
                         devices.add(connectedDevice)
                         onDeviceSelected(connectedDevice)
-                        toast("Установлено соединение с ${connectedDevice.name}")
+                        //toast("Установлено соединение с ${connectedDevice.name}")
 
                     } catch (e: Exception) {
+                        e.printStackTrace()
                         alertError(e.message)
                         ConnectionManager.disconnect(bluetoothDevice)
                     }
+                }
 
             }
             onDisconnect = {

@@ -18,9 +18,9 @@ import kotlinx.android.synthetic.main.time.view.*
 import org.jetbrains.anko.async
 import java.util.*
 
-class ChannelRecyclerAdapter(private val channels : ArrayList<Channel>, val currentDevice : SprinklerDevice?) : RecyclerView.Adapter<ChannelRecyclerAdapter.ChannelViewHolder>() {
+class ChannelRecyclerAdapter(private val channels : ArrayList<Channel>) : RecyclerView.Adapter<ChannelRecyclerAdapter.ChannelViewHolder>() {
 
-
+    private var currentDevice : SprinklerDevice? = null
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ChannelViewHolder {
         val itemView = LayoutInflater.from(parent.context).inflate(R.layout.channel, parent, false)
@@ -101,7 +101,9 @@ class ChannelRecyclerAdapter(private val channels : ArrayList<Channel>, val curr
         }
     }
 
-
+    fun setCurrentDevice(device: SprinklerDevice?) {
+        currentDevice = device
+    }
 
     class ChannelViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         var tvChannelId : TextView = itemView.name
