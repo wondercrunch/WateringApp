@@ -16,6 +16,7 @@ import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit
 
 const val CMD_READ_CONFIG = 0x86
+const val CMD_LOAD_CONFIG = 0x84
 const val CMD_IDENTIFY = 0x8A
 const val CMD_GET_STATE = 0x6E
 const val CMD_RF_ON = 0x68
@@ -28,12 +29,8 @@ class SprinklerDevice(val bluetoothDevice : BluetoothDevice, val deviceListener 
 
     private val responseQueue : BlockingQueue<Response> = LinkedBlockingQueue()
     private val scope = CoroutineScope(Dispatchers.IO)
-
+    private val responseReader = ResponseReader(responseQueue)
     private val eventListener : ConnectionEventListener = ConnectionEventListener().apply {
-        val buffer = ByteArrayOutputStream()
-        val dataLength = -1
-
-
         onRead = {
             device, payload ->
             if (device == bluetoothDevice) {
@@ -60,7 +57,7 @@ class SprinklerDevice(val bluetoothDevice : BluetoothDevice, val deviceListener 
         ConnectionManager.registerListener(eventListener, ConnectionManager.ListenerType.IO)
         write(CommandPacket(CMD_IDENTIFY).toByteArray())
         val nameResponse = getResponse().checkStatus()
-        name = String(nameResponse.data, 0, 11, StandardCharsets.UTF_8)
+        name = String(nameResponse.data, 0, 10, StandardCharsets.UTF_8)
 
         write(CommandPacket(CMD_GET_STATE).toByteArray())
         val stateResponse = getResponse().checkStatus().checkData()
@@ -73,11 +70,7 @@ class SprinklerDevice(val bluetoothDevice : BluetoothDevice, val deviceListener 
         val channelsCount = countResponse.data[0].toInt()
         if (channelsCount == 0) channels = emptyList()
         else {
-            /*
-            channels = List(channelsCount) {
-                Channel(Array(7){false}, Array(7){false}, AlarmTime(0,0,0), AlarmTime(0,0,0))
-            }
-            */
+
             val readChannels = CommandPacket(CMD_READ_CONFIG).addByte(1 + channelsCount * 8).toByteArray()
             write(readChannels)
             val channelsResponse = getResponse().checkStatus().checkData()
@@ -107,7 +100,7 @@ class SprinklerDevice(val bluetoothDevice : BluetoothDevice, val deviceListener 
     }
 
     private fun calculateVoltage(raw : Byte) : Float {
-        return raw * 0.02664f
+        return raw.toUByte().toFloat() * 0.02664f
     }
 
     private fun write(cmd : ByteArray) {
@@ -125,10 +118,10 @@ class SprinklerDevice(val bluetoothDevice : BluetoothDevice, val deviceListener 
         return getResponse(DEFAULT_TIMEOUT)
     }
 
-    private fun runCommand(command: suspend () -> Unit) {
+    private fun runCommand(name : String, command: suspend () -> Unit) {
         scope.launch(Dispatchers.IO) {
             try {
-                Log.i("SprinklerDevice", "running command")
+                Log.i("SprinklerDevice", "Running command: $name")
                 command()
                 deviceListener.onCommandSuccess.invoke()
             } catch (e : Exception) {
@@ -138,18 +131,26 @@ class SprinklerDevice(val bluetoothDevice : BluetoothDevice, val deviceListener 
     }
 
     fun loadConfig() {
-
+        runCommand("Load Config") {
+            val cmd = CommandPacket(CMD_LOAD_CONFIG)
+            channels.forEach { channel -> cmd.addBytes(channel.toByteArray())}
+            write (cmd.toByteArray())
+            getResponse().checkStatus()
+        }
     }
 
     fun toggleChannel(on : Boolean, channel: Int) {
-        runCommand {
+        runCommand("Toggle Channel") {
             val cmd = CommandPacket(if (on) CMD_RF_ON else CMD_RF_OFF).addByte(channel).toByteArray()
             write(cmd)
             getResponse().checkStatus()
         }
     }
 
-    private val responseReader = ResponseReader(responseQueue)
+    fun disconnect() {
+        ConnectionManager.unregisterListener(eventListener)
+        ConnectionManager.disconnect(bluetoothDevice)
+    }
 
     private class ResponseReader(val responseQueue: BlockingQueue<Response>) {
         private enum class State {

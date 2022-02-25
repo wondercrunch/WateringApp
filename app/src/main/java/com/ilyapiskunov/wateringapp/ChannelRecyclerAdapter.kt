@@ -16,6 +16,7 @@ import androidx.recyclerview.widget.RecyclerView
 import kotlinx.android.synthetic.main.channel.view.*
 import kotlinx.android.synthetic.main.time.view.*
 import org.jetbrains.anko.async
+import java.time.LocalDate
 import java.util.*
 
 class ChannelRecyclerAdapter(private val channels : ArrayList<Channel>) : RecyclerView.Adapter<ChannelRecyclerAdapter.ChannelViewHolder>() {

@@ -2,6 +2,7 @@ package com.ilyapiskunov.wateringapp
 
 import java.io.ByteArrayInputStream
 import java.util.*
+import kotlin.experimental.or
 
 
 class Channel (val week1 : Array<Boolean>,
@@ -31,4 +32,20 @@ class Channel (val week1 : Array<Boolean>,
         return result
     }
 
+    fun toByteArray() :ByteArray {
+        val res = ByteArray(8)
+        for (i in 0..6) {
+            if (week1[i]) res[0] = res[0] or (1 shl i).toByte()
+            if (week2[i]) res[1] = res[1] or (1 shl i).toByte()
+        }
+        res[2] = timeOn.hours.toByte()
+        res[3] = timeOn.minutes.toByte()
+        res[4] = timeOn.seconds.toByte()
+        res[5] = timeOff.hours.toByte()
+        res[6] = timeOff.minutes.toByte()
+        res[7] = timeOff.seconds.toByte()
+        return res
+    }
+
 }
+

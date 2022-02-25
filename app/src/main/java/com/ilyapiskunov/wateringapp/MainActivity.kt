@@ -103,8 +103,10 @@ class MainActivity : AppCompatActivity() {
                     val selected = devices[index]
                     if (currentDevice != selected)
                         onDeviceSelected(selected)
+                    else
+                        selected.disconnect()
 
-                }
+                }.show()
             }
             else alertDeviceNotConnected()
             return true
@@ -149,6 +151,8 @@ class MainActivity : AppCompatActivity() {
             currentDevice = device
             channelsAdapter.setCurrentDevice(device)
             menuSelectDevice.title = device.name
+            tvVoltage.text = getString(R.string.voltage_format, device.voltage)
+            tvWaterLevel.text = getString(R.string.water_level_format, device.waterLevel)
             channels.clear()
             channels.addAll(device.channels)
             channelsAdapter.notifyDataSetChanged()
@@ -162,6 +166,8 @@ class MainActivity : AppCompatActivity() {
             currentDevice = null
             channelsAdapter.setCurrentDevice(null)
             menuSelectDevice.setTitle(R.string.device_name_holder)
+            tvVoltage.text = ""
+            tvWaterLevel.text = ""
             channels.clear()
             channelsAdapter.notifyDataSetChanged()
         }
@@ -194,11 +200,14 @@ class MainActivity : AppCompatActivity() {
     private val deviceEventListener by lazy {
         DeviceEventListener().apply {
             onCommandSuccess = {
-                toast("OK")
+                runOnUiThread {
+                    toast("OK")
+                }
             }
 
             onCommandError = {
                 exception ->
+                exception.printStackTrace()
                 alertError(exception.message)
             }
         }
@@ -232,7 +241,7 @@ class MainActivity : AppCompatActivity() {
                     }
                     if (disconnectedDevice != null) {
                         devices.remove(disconnectedDevice!!)
-                        toast("Потеряно соединение с ${disconnectedDevice!!.name}")
+                        //toast("Потеряно соединение с ${disconnectedDevice!!.name}")
                         if (devices.isEmpty()) {
                             alertDeviceNotConnected()
                             onNoDeviceSelected()

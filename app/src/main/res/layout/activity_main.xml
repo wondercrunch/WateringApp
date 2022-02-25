@@ -5,6 +5,25 @@
 	android:layout_width="match_parent"
 	android:layout_height="match_parent"
 	tools:context=".MainActivity">
+	<TextView
+		android:layout_width="0dp"
+		android:layout_height="wrap_content"
+		android:id="@+id/tvVoltage"
+		app:layout_constraintStart_toStartOf="parent"
+		app:layout_constraintEnd_toEndOf="parent"
+		app:layout_constraintTop_toTopOf="parent"
+		android:layout_marginStart="20dp"
+		/>
+	<TextView
+		android:layout_width="0dp"
+		android:layout_height="wrap_content"
+		android:id="@+id/tvWaterLevel"
+		app:layout_constraintStart_toStartOf="parent"
+		app:layout_constraintEnd_toEndOf="parent"
+		app:layout_constraintTop_toBottomOf="@id/tvVoltage"
+		app:layout_constraintBottom_toTopOf="@id/listChannels"
+		android:layout_marginStart="20dp"
+		/>
 
 	<androidx.recyclerview.widget.RecyclerView
 		android:layout_width="0dp"
@@ -12,7 +31,7 @@
 		app:layout_constraintBottom_toTopOf="@id/btnWrite"
 		app:layout_constraintEnd_toEndOf="parent"
 		app:layout_constraintStart_toStartOf="parent"
-		app:layout_constraintTop_toTopOf="parent"
+		app:layout_constraintTop_toBottomOf="@id/tvWaterLevel"
 		tools:listitem="@layout/channel"
 		android:id="@+id/listChannels"
 		/>
