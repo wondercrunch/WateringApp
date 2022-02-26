@@ -20,6 +20,7 @@ import kotlinx.coroutines.launch
 import org.jetbrains.anko.alert
 import org.jetbrains.anko.toast
 import java.lang.Exception
+import java.time.LocalDate
 import java.util.*
 import java.util.concurrent.*
 import kotlin.collections.ArrayList
@@ -48,6 +49,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        Locale.setDefault(Locale("ru", "RU"))
         ConnectionManager.registerListener(connectionEventListener, ConnectionManager.ListenerType.CONNECTION)
         ModelPreferencesManager.with(this)
         setContentView(R.layout.activity_main)
@@ -77,6 +79,7 @@ class MainActivity : AppCompatActivity() {
 
         //DEBUG
         channels.add(Channel(Array(7) {false}, Array(7) {false}, AlarmTime(0, 0, 0), AlarmTime(0, 0, 0)))
+
     }
 
     override fun onDestroy() {

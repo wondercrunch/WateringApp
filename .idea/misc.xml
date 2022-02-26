@@ -4,9 +4,9 @@
     <option name="filePathToZoomLevelMap">
       <map>
         <entry key="../../../../layout/custom_preview.xml" value="0.10416666666666667" />
-        <entry key="..\:/Java/JavaForAndroid/WateringAppNew/app/src/main/res/layout/activity_main.xml" value="0.2848731884057971" />
         <entry key="app/src/main/res/layout/activity_main.xml" value="0.14990942028985507" />
         <entry key="app/src/main/res/layout/channel.xml" value="0.1" />
+        <entry key="app/src/main/res/layout/days_of_week.xml" value="0.1" />
       </map>
     </option>
   </component>

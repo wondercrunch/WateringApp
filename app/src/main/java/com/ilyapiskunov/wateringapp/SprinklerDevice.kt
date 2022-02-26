@@ -21,6 +21,7 @@ const val CMD_IDENTIFY = 0x8A
 const val CMD_GET_STATE = 0x6E
 const val CMD_RF_ON = 0x68
 const val CMD_RF_OFF = 0x6A
+const val CMD_SET_TIME = 0x70
 const val DEFAULT_TIMEOUT = 1000L
 class SprinklerDevice(val bluetoothDevice : BluetoothDevice, val deviceListener : DeviceEventListener) {
     val waterLevel : Int
@@ -53,7 +54,6 @@ class SprinklerDevice(val bluetoothDevice : BluetoothDevice, val deviceListener 
     val channels : List<Channel>
 
     init {
-
         ConnectionManager.registerListener(eventListener, ConnectionManager.ListenerType.IO)
         write(CommandPacket(CMD_IDENTIFY).toByteArray())
         val nameResponse = getResponse().checkStatus()
@@ -132,9 +132,22 @@ class SprinklerDevice(val bluetoothDevice : BluetoothDevice, val deviceListener 
 
     fun loadConfig() {
         runCommand("Load Config") {
-            val cmd = CommandPacket(CMD_LOAD_CONFIG)
+            var cmd = CommandPacket(CMD_LOAD_CONFIG)
             channels.forEach { channel -> cmd.addBytes(channel.toByteArray())}
             write (cmd.toByteArray())
+            getResponse().checkStatus()
+
+            cmd = CommandPacket(CMD_SET_TIME)
+            val calendar = Calendar.getInstance()
+            val day = (calendar.get(Calendar.DAY_OF_WEEK) - 2).mod(7) //0..6
+            var dayByte = 1 shl day
+            if (calendar.get(Calendar.WEEK_OF_YEAR) % 2 == 0)
+                dayByte = dayByte or 0x80
+            cmd.addByte(dayByte)
+                .addByte(calendar.get(Calendar.HOUR_OF_DAY))
+                .addByte(calendar.get(Calendar.MINUTE))
+                .addByte(calendar.get(Calendar.SECOND))
+            write(cmd.toByteArray())
             getResponse().checkStatus()
         }
     }

@@ -1,5 +1,6 @@
 package com.ilyapiskunov.wateringapp
 
+import android.graphics.Color
 import android.os.Handler
 import android.os.Looper
 import android.text.Editable
@@ -33,7 +34,12 @@ class ChannelRecyclerAdapter(private val channels : ArrayList<Channel>) : Recycl
     override fun onBindViewHolder(holder: ChannelViewHolder, position: Int) {
         holder.tvChannelId.text = "Канал ".plus(position+1)
         val channel : Channel = channels[position]
-
+        val isCurrentWeekEven = Calendar.getInstance().get(Calendar.WEEK_OF_YEAR) % 2 != 0
+        if (isCurrentWeekEven) {
+            holder.tvWeek1.setTextColor(Color.GREEN)
+        } else {
+            holder.tvWeek2.setTextColor(Color.GREEN)
+        }
         for (i in 0..6) {
             val dayOfWeek1 : ToggleButton = holder.daysOfWeek1[i] as ToggleButton
             dayOfWeek1.isChecked = channel.week1[i]
