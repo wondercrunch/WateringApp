@@ -9,10 +9,12 @@ import android.os.Bundle
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
+import android.widget.ArrayAdapter
 import android.widget.LinearLayout
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.ilyapiskunov.wateringapp.Tools.toHex
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -20,7 +22,6 @@ import kotlinx.coroutines.launch
 import org.jetbrains.anko.alert
 import org.jetbrains.anko.toast
 import java.lang.Exception
-import java.time.LocalDate
 import java.util.*
 import java.util.concurrent.*
 import kotlin.collections.ArrayList
@@ -40,17 +41,18 @@ class MainActivity : AppCompatActivity() {
     }
 
 
-    private var currentDevice : SprinklerDevice? = null
+    private var currentDevice : WateringDevice? = null
     private val channels = ArrayList<Channel>()
+    private val messages = ArrayList<String>()
     private val channelsAdapter = ChannelRecyclerAdapter(channels)
-    private val replyQueue = LinkedBlockingQueue<ByteArray>()
-    private val devices : LinkedList<SprinklerDevice> = LinkedList()
+    private lateinit var logAdapter : ArrayAdapter<String>
+    private val devices : LinkedList<WateringDevice> = LinkedList()
     private lateinit var menuSelectDevice: MenuItem
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Locale.setDefault(Locale("ru", "RU"))
-        ConnectionManager.registerListener(connectionEventListener, ConnectionManager.ListenerType.CONNECTION)
+        ConnectionManager.registerListener(connectionEventListener)
         ModelPreferencesManager.with(this)
         setContentView(R.layout.activity_main)
         //Log.i(TAG, "Channels size: " + channels.size)
@@ -77,13 +79,17 @@ class MainActivity : AppCompatActivity() {
             currentDevice?.loadConfig() ?: alertDeviceNotConnected()
         }
 
+        logAdapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, messages)
+        log.adapter = logAdapter
+
         //DEBUG
-        channels.add(Channel(Array(7) {false}, Array(7) {false}, AlarmTime(0, 0, 0), AlarmTime(0, 0, 0)))
+        //channels.add(Channel(Array(7) {false}, Array(7) {false}, AlarmTime(0, 0, 0), AlarmTime(0, 0, 0)))
 
     }
 
     override fun onDestroy() {
         super.onDestroy()
+        devices.forEach{ device -> device.disconnect() }
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
@@ -99,24 +105,22 @@ class MainActivity : AppCompatActivity() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         val id = item.itemId
         if (id == R.id.current_device) {
-            if (devices.isNotEmpty()) {
-                val deviceDialogBuilder = AlertDialog.Builder(this)
-                deviceDialogBuilder.setItems(devices.map { device -> device.name }
-                    .toTypedArray()) { _, index ->
-                    val selected = devices[index]
-                    if (currentDevice != selected)
-                        onDeviceSelected(selected)
-                    else
-                        selected.disconnect()
+            AlertDialog.Builder(this)
+                .setTitle("Устройства")
+                .setItems(devices.map { device -> device.name }
+                .toTypedArray()) { _, index ->
+                val selected = devices[index]
+                if (currentDevice != selected)
+                    onDeviceSelected(selected)
+                else
+                    selected.disconnect()
 
-                }.show()
-            }
-            else alertDeviceNotConnected()
+            }.setPositiveButton("Поиск") { dialogInterface, i ->
+                val deviceListIntent = Intent(this, DeviceListActivity::class.java)
+                startActivityForResult(deviceListIntent, REQUEST_CONNECT_DEVICE)
+            }.show()
+
             return true
-        }
-        else if (id == R.id.menu_device_list) {
-            val deviceListIntent = Intent(this, DeviceListActivity::class.java)
-            startActivityForResult(deviceListIntent, REQUEST_CONNECT_DEVICE)
         }
         return super.onOptionsItemSelected(item)
     }
@@ -149,7 +153,7 @@ class MainActivity : AppCompatActivity() {
 
 
 
-    private fun onDeviceSelected(device: SprinklerDevice) {
+    private fun onDeviceSelected(device: WateringDevice) {
         runOnUiThread {
             currentDevice = device
             channelsAdapter.setCurrentDevice(device)
@@ -216,6 +220,12 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun journal(message: String) {
+        runOnUiThread {
+            messages.add(message)
+            logAdapter.notifyDataSetChanged()
+        }
+    }
 
     private val connectionEventListener by lazy {
         ConnectionEventListener().apply {
@@ -223,7 +233,8 @@ class MainActivity : AppCompatActivity() {
                 bluetoothDevice ->
                 CoroutineScope(Dispatchers.IO).launch {
                     try {
-                        val connectedDevice = SprinklerDevice(bluetoothDevice, deviceEventListener)
+                        journal("Установлено соединение с ${bluetoothDevice.name}")
+                        val connectedDevice = WateringDevice(bluetoothDevice, deviceEventListener)
                         devices.add(connectedDevice)
                         onDeviceSelected(connectedDevice)
                         //toast("Установлено соединение с ${connectedDevice.name}")
@@ -238,22 +249,36 @@ class MainActivity : AppCompatActivity() {
             }
             onDisconnect = {
                 bluetoothDevice ->
-                    var disconnectedDevice : SprinklerDevice? = null
+                CoroutineScope(Dispatchers.IO).launch {
+                    journal("Потеряно соединение с ${bluetoothDevice.name}")
+                    var disconnectedDevice: WateringDevice? = null
                     devices.forEach {
                         if (it.bluetoothDevice == bluetoothDevice) disconnectedDevice = it
                     }
                     if (disconnectedDevice != null) {
                         devices.remove(disconnectedDevice!!)
+                        disconnectedDevice!!.unregisterListener()
                         //toast("Потеряно соединение с ${disconnectedDevice!!.name}")
                         if (devices.isEmpty()) {
                             alertDeviceNotConnected()
                             onNoDeviceSelected()
-                        }
-                        else {
+                        } else {
                             onDeviceSelected(devices[0])
                         }
 
                     }
+                }
+            }
+            onRead = {
+                bluetoothDevice, bytes ->
+                runOnUiThread {
+                    journal("RX: ${bytes.toHex()}")
+                }
+            }
+
+            onWrite = {
+                bluetoothDevice, bytes ->
+                journal("TX: ${bytes.toHex()}")
             }
         }
     }

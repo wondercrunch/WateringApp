@@ -18,8 +18,7 @@ import java.util.concurrent.ConcurrentLinkedQueue
 object ConnectionManager {
 
     private val TAG = "ConnectionManager"
-    private var connectionListeners : LinkedList<WeakReference<ConnectionEventListener>> = LinkedList()
-    private var ioListeners : LinkedList<WeakReference<ConnectionEventListener>> = LinkedList()
+    private var listeners : MutableSet<WeakReference<ConnectionEventListener>> = mutableSetOf()
     var isConnected = false
     private val operationQueue = ConcurrentLinkedQueue<Operation>()
     private var pendingOperation : Operation? = null
@@ -27,33 +26,19 @@ object ConnectionManager {
     private const val SERIAL_CHARACTERISTIC_UUID = "0000ffe1-0000-1000-8000-00805f9b34fb"
     private const val SERIAL_SERVICE_UUID = "0000ffe0-0000-1000-8000-00805f9b34fb"
     private val serialServiceUUID = UUID.fromString(SERIAL_SERVICE_UUID)
-    private val serialCharUUID = UUID.fromString(SERIAL_CHARACTERISTIC_UUID)
+    private val serialCharacteristicUUID = UUID.fromString(SERIAL_CHARACTERISTIC_UUID)
 
-    enum class ListenerType {
-        CONNECTION,
-        IO
-    }
-
-    fun registerListener(listener: ConnectionEventListener, type : ListenerType) {
-        when (type) {
-            ListenerType.CONNECTION -> {
-                if (connectionListeners.map { it.get() }.contains(listener)) return
-                connectionListeners.add(WeakReference(listener))
-            }
-            ListenerType.IO -> {
-                if (ioListeners.map { it.get() }.contains(listener)) return
-                ioListeners.add(WeakReference(listener))
-            }
-        }
-
+    fun registerListener(listener: ConnectionEventListener) {
+        if (listeners.map { it.get() }.contains(listener)) return
+        listeners.add(WeakReference(listener))
     }
 
     fun unregisterListener(listener: ConnectionEventListener) {
         var refToRemove : WeakReference<ConnectionEventListener>? = null
-        connectionListeners.forEach{ ref -> if (ref.get() == listener) {
+        listeners.forEach{ ref -> if (ref.get() == listener) {
             refToRemove = ref
         } }
-        connectionListeners.remove(refToRemove)
+        listeners.remove(refToRemove)
     }
 
     fun connect(device : BluetoothDevice, context : Context) {
@@ -80,7 +65,7 @@ object ConnectionManager {
 
     @Synchronized
     private fun enqueueOperation(operation: Operation) {
-        Log.i("ConnectionManager", "Enqueueing operation: $operation")
+        //Log.i("ConnectionManager", "Enqueueing operation: $operation")
         operationQueue.add(operation)
         if (pendingOperation == null) {
             nextOperation()
@@ -122,21 +107,21 @@ object ConnectionManager {
                 Log.i(TAG, "Disconnecting from ${device.name}")
                 gatt.close()
                 deviceGattMap.remove(device)
-                connectionListeners.forEach { ref -> ref.get()?.onDisconnect?.invoke(device) }
+                listeners.forEach { ref -> ref.get()?.onDisconnect?.invoke(device) }
                 signalEndOfOperation()
             }
 
             is Write -> with(operation) {
                 val serialCharacteristic = gatt
                     .getService(serialServiceUUID)
-                    .getCharacteristic(serialCharUUID)
+                    .getCharacteristic(serialCharacteristicUUID)
                 serialCharacteristic.writeType = BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT
                 serialCharacteristic.value = data
                 val res = gatt.writeCharacteristic(serialCharacteristic)
                 Log.i(TAG, "write data init success: $res")
+                listeners.forEach { ref -> ref.get()?.onWrite?.invoke(gatt.device, data) }
                 signalEndOfOperation()
             }
-
         }
 
     }
@@ -177,7 +162,7 @@ object ConnectionManager {
 
 
                     val serialCharacteristic =
-                        getService(serialServiceUUID).getCharacteristic(serialCharUUID)
+                        getService(serialServiceUUID).getCharacteristic(serialCharacteristicUUID)
                     //gatt.readCharacteristic(gatt.getService(appServiceUUID).getCharacteristic(appCharUUID))
                     val notificationEnabled = setCharacteristicNotification(serialCharacteristic, true)
                     if (notificationEnabled) {
@@ -201,7 +186,7 @@ object ConnectionManager {
         override fun onMtuChanged(gatt: BluetoothGatt?, mtu: Int, status: Int) {
             Log.i("BluetoothGattCallback", "MTU chaged to $mtu, success:${status == BluetoothGatt.GATT_SUCCESS}")
             if (status == BluetoothGatt.GATT_SUCCESS) {
-                connectionListeners.forEach { ref -> ref.get()?.onConnectionSetupComplete?.invoke(gatt!!.device) }
+                listeners.forEach { ref -> ref.get()?.onConnectionSetupComplete?.invoke(gatt!!.device) }
             }
             else {
                 Log.i("BluetoothGattCallback", "Error in MTU change request")
@@ -214,15 +199,17 @@ object ConnectionManager {
 
         override fun onCharacteristicWrite(
             gatt: BluetoothGatt?,
-            characteristic: BluetoothGattCharacteristic?,
+            characteristic: BluetoothGattCharacteristic,
             status: Int
         ) {
-            if (status == BluetoothGatt.GATT_SUCCESS) {
-                Log.i("BluetoothGattCallback", "write success!")
-                ioListeners.forEach { ref -> ref.get()?.onWrite?.invoke(gatt!!.device) }
-            }
-            else {
-                Log.i("BluetoothGattCallback", "write fail: $status")
+            with (characteristic) {
+                if (status == BluetoothGatt.GATT_SUCCESS) {
+                        Log.i("BluetoothGattCallback", "characteristic $uuid write success")
+
+                }
+                else {
+                    Log.i("BluetoothGattCallback", "characteristic $uuid write fail: $status")
+                }
             }
 
         }
@@ -233,9 +220,9 @@ object ConnectionManager {
         ) {
             with (characteristic) {
                 Log.i("BluetoothGattCallback", "characteristic $uuid changed, new value = ${value.toHex()}")
-                if (uuid == serialCharUUID) {
+                if (uuid == serialCharacteristicUUID) {
                     //replyQueue.put(value)
-                    ioListeners.forEach { ref -> ref.get()?.onRead?.invoke(gatt.device, value) }
+                    listeners.forEach { ref -> ref.get()?.onRead?.invoke(gatt.device, value) }
                 }
             }
         }

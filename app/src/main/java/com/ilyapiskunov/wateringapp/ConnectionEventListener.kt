@@ -7,5 +7,5 @@ class ConnectionEventListener {
     var onConnectionSetupComplete: ((BluetoothDevice) -> Unit)? = null
     var onDisconnect: ((BluetoothDevice) -> Unit)? = null
     var onRead: ((BluetoothDevice, ByteArray) -> Unit)? = null
-    var onWrite: ((BluetoothDevice) -> Unit)? = null
+    var onWrite: ((BluetoothDevice, ByteArray) -> Unit)? = null
 }

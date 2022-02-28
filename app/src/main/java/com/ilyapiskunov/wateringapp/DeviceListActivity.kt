@@ -94,7 +94,7 @@ class DeviceListActivity : Activity() {
         else {
             devices.clear()
             devicesAdapter.notifyDataSetChanged()
-            bleScanner.startScan(listOf(scanFilter), scanSettings, scanCallback)
+            bleScanner.startScan(null, scanSettings, scanCallback)
             isScanning = true
         }
     }

@@ -40,21 +40,21 @@
         app:layout_constraintVertical_bias="1.0" />
 
     <TextView
-        android:id="@+id/tvWeek1"
+        android:id="@+id/tvWeekOdd"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="1 нед"
+        android:text="Нечёт"
         app:layout_constraintBottom_toBottomOf="@+id/days_of_week_1"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="@+id/days_of_week_1" />
 
     <TextView
-        android:id="@+id/tvWeek2"
+        android:id="@+id/tvWeekEven"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="2 нед"
+        android:text="Чёт"
         app:layout_constraintBottom_toBottomOf="@+id/days_of_week_2"
-        app:layout_constraintStart_toStartOf="@+id/tvWeek1"
+        app:layout_constraintEnd_toEndOf="@+id/tvWeekOdd"
         app:layout_constraintTop_toTopOf="@+id/days_of_week_2" />
 
     <include
@@ -63,7 +63,7 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/tvWeek1"
+        app:layout_constraintStart_toEndOf="@+id/tvWeekOdd"
         app:layout_constraintTop_toBottomOf="@+id/btnSkipDay" />
 
     <include
@@ -74,7 +74,7 @@
         android:layout_marginTop="4dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
-        app:layout_constraintStart_toEndOf="@+id/tvWeek2"
+        app:layout_constraintStart_toEndOf="@+id/tvWeekEven"
         app:layout_constraintTop_toBottomOf="@+id/days_of_week_1" />
 
     <include

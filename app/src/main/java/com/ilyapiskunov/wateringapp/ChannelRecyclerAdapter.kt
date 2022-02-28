@@ -16,13 +16,14 @@ import androidx.core.view.get
 import androidx.recyclerview.widget.RecyclerView
 import kotlinx.android.synthetic.main.channel.view.*
 import kotlinx.android.synthetic.main.time.view.*
-import org.jetbrains.anko.async
-import java.time.LocalDate
 import java.util.*
 
 class ChannelRecyclerAdapter(private val channels : ArrayList<Channel>) : RecyclerView.Adapter<ChannelRecyclerAdapter.ChannelViewHolder>() {
 
-    private var currentDevice : SprinklerDevice? = null
+    private var currentDevice : WateringDevice? = null
+    private val isCurrentWeekEven
+        get() = Calendar.getInstance().get(Calendar.WEEK_OF_YEAR) % 2 == 0
+
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ChannelViewHolder {
         val itemView = LayoutInflater.from(parent.context).inflate(R.layout.channel, parent, false)
@@ -34,11 +35,10 @@ class ChannelRecyclerAdapter(private val channels : ArrayList<Channel>) : Recycl
     override fun onBindViewHolder(holder: ChannelViewHolder, position: Int) {
         holder.tvChannelId.text = "Канал ".plus(position+1)
         val channel : Channel = channels[position]
-        val isCurrentWeekEven = Calendar.getInstance().get(Calendar.WEEK_OF_YEAR) % 2 != 0
         if (isCurrentWeekEven) {
-            holder.tvWeek1.setTextColor(Color.GREEN)
+            holder.tvWeekEven.setTextColor(Color.GREEN)
         } else {
-            holder.tvWeek2.setTextColor(Color.GREEN)
+            holder.tvWeekOdd.setTextColor(Color.GREEN)
         }
         for (i in 0..6) {
             val dayOfWeek1 : ToggleButton = holder.daysOfWeek1[i] as ToggleButton
@@ -108,7 +108,7 @@ class ChannelRecyclerAdapter(private val channels : ArrayList<Channel>) : Recycl
         }
     }
 
-    fun setCurrentDevice(device: SprinklerDevice?) {
+    fun setCurrentDevice(device: WateringDevice?) {
         currentDevice = device
     }
 
@@ -118,8 +118,8 @@ class ChannelRecyclerAdapter(private val channels : ArrayList<Channel>) : Recycl
         val btnClose : Button = itemView.btnClose
         var btnSkipDay : Button = itemView.btnSkipDay
         var btnEveryDay : Button = itemView.btnEveryDay
-        val tvWeek1 : TextView = itemView.tvWeek1
-        val tvWeek2 : TextView = itemView.tvWeek2
+        val tvWeekOdd : TextView = itemView.tvWeekOdd
+        val tvWeekEven : TextView = itemView.tvWeekEven
         var daysOfWeek1 : LinearLayout = itemView.days_of_week_1 as LinearLayout
         var daysOfWeek2 : LinearLayout = itemView.days_of_week_2 as LinearLayout
         val tvTimeOn : TextView = itemView.tvTimeOn
