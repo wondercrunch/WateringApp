@@ -2,6 +2,8 @@ package com.ilyapiskunov.wateringapp
 
 import android.bluetooth.BluetoothDevice
 import android.util.Log
+import com.ilyapiskunov.wateringapp.connection.ConnectionEventListener
+import com.ilyapiskunov.wateringapp.connection.ConnectionManager
 import com.ilyapiskunov.wateringapp.exception.TimeoutException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -9,7 +11,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.io.ByteArrayInputStream
-import java.io.ByteArrayOutputStream
 import java.nio.charset.StandardCharsets
 import java.util.*
 
@@ -127,10 +128,11 @@ class WateringDevice(val bluetoothDevice : BluetoothDevice, private val deviceLi
                 commandLock.withLock {
                     try {
                         Log.i("SprinklerDevice", "Running command: $name")
+                        deviceListener.onCommandStart.invoke(name)
                         command()
-                        deviceListener.onCommandSuccess.invoke()
+                        deviceListener.onCommandSuccess.invoke(name)
                     } catch (e : Exception) {
-                        deviceListener.onCommandError.invoke(e)
+                        deviceListener.onCommandError.invoke(name, e)
                     }
                 }
             }
@@ -138,12 +140,16 @@ class WateringDevice(val bluetoothDevice : BluetoothDevice, private val deviceLi
 
         fun loadConfig() {
             runCommand("Load Config") {
-                var cmd = CommandPacket(CMD_LOAD_CONFIG)
+                val cmd = CommandPacket(CMD_LOAD_CONFIG)
                 channels.forEach { channel -> cmd.addBytes(channel.toByteArray())}
                 write (cmd.toByteArray())
                 getResponse().checkStatus()
+            }
+        }
 
-                cmd = CommandPacket(CMD_SET_TIME)
+        fun setTime() {
+            runCommand("Set Time") {
+                val cmd = CommandPacket(CMD_SET_TIME)
                 val calendar = Calendar.getInstance()
                 val day = (calendar.get(Calendar.DAY_OF_WEEK) - 2).mod(7) //0..6
                 var dayByte = 1 shl day

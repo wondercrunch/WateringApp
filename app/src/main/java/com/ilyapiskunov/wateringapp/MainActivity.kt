@@ -15,6 +15,8 @@ import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.ilyapiskunov.wateringapp.Tools.toHex
+import com.ilyapiskunov.wateringapp.connection.ConnectionEventListener
+import com.ilyapiskunov.wateringapp.connection.ConnectionManager
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -23,7 +25,6 @@ import org.jetbrains.anko.alert
 import org.jetbrains.anko.toast
 import java.lang.Exception
 import java.util.*
-import java.util.concurrent.*
 import kotlin.collections.ArrayList
 
 class MainActivity : AppCompatActivity() {
@@ -76,7 +77,11 @@ class MainActivity : AppCompatActivity() {
         }
 
         btnWrite.setOnClickListener {
-            currentDevice?.loadConfig() ?: alertDeviceNotConnected()
+            currentDevice?.let {
+                device ->
+                device.loadConfig()
+                device.setTime()
+            } ?: alertDeviceNotConnected()
         }
 
         logAdapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, messages)
@@ -105,24 +110,30 @@ class MainActivity : AppCompatActivity() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         val id = item.itemId
         if (id == R.id.current_device) {
-            AlertDialog.Builder(this)
-                .setTitle("Устройства")
-                .setItems(devices.map { device -> device.name }
-                .toTypedArray()) { _, index ->
-                val selected = devices[index]
-                if (currentDevice != selected)
-                    onDeviceSelected(selected)
-                else
-                    selected.disconnect()
+            if (devices.isNotEmpty()) {
+                AlertDialog.Builder(this)
+                    .setTitle("Устройства")
+                    .setItems(devices.map { device -> device.name }
+                        .toTypedArray()) { _, index ->
+                        val selected = devices[index]
+                        if (currentDevice != selected)
+                            onDeviceSelected(selected)
+                        else
+                            selected.disconnect()
 
-            }.setPositiveButton("Поиск") { dialogInterface, i ->
-                val deviceListIntent = Intent(this, DeviceListActivity::class.java)
-                startActivityForResult(deviceListIntent, REQUEST_CONNECT_DEVICE)
-            }.show()
-
+                    }.setPositiveButton("Поиск") { dialogInterface, i ->
+                        startSearchActivity()
+                    }.show()
+            }
+            else startSearchActivity()
             return true
         }
         return super.onOptionsItemSelected(item)
+    }
+
+    private fun startSearchActivity() {
+        val deviceListIntent = Intent(this, DeviceListActivity::class.java)
+        startActivityForResult(deviceListIntent, REQUEST_CONNECT_DEVICE)
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -206,6 +217,12 @@ class MainActivity : AppCompatActivity() {
 
     private val deviceEventListener by lazy {
         DeviceEventListener().apply {
+
+            onCommandStart = {
+                name ->
+                journal("Команда $name")
+            }
+
             onCommandSuccess = {
                 runOnUiThread {
                     toast("OK")
@@ -213,7 +230,7 @@ class MainActivity : AppCompatActivity() {
             }
 
             onCommandError = {
-                exception ->
+                name, exception ->
                 exception.printStackTrace()
                 alertError(exception.message)
             }

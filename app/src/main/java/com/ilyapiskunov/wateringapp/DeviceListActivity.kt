@@ -78,7 +78,7 @@ class DeviceListActivity : Activity() {
             else
                 startBleScan()
         }
-
+        startBleScan()
 
     }
 

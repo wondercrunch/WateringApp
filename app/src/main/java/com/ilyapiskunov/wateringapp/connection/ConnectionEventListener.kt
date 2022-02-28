@@ -1,4 +1,4 @@
-package com.ilyapiskunov.wateringapp
+package com.ilyapiskunov.wateringapp.connection
 
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothGatt
