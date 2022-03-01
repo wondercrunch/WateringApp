@@ -24,7 +24,7 @@
 				<category android:name="android.intent.category.LAUNCHER" />
 			</intent-filter>
 		</activity>
-		<activity android:name=".DeviceListActivity" android:screenOrientation="portrait"/>
+		<activity android:name=".ble.search.DeviceListActivity" android:screenOrientation="portrait"/>
 
 	</application>
 

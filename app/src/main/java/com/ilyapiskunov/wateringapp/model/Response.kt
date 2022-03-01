@@ -1,9 +1,7 @@
-package com.ilyapiskunov.wateringapp
+package com.ilyapiskunov.wateringapp.model
 
-import android.util.Log
 import com.ilyapiskunov.wateringapp.Tools.toHex
 import com.ilyapiskunov.wateringapp.exception.DeviceException
-import java.util.*
 
 class Response(val status: Int, val data: ByteArray) {
 

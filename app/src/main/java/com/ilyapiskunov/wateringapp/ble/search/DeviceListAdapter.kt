@@ -1,14 +1,13 @@
-package com.ilyapiskunov.wateringapp
+package com.ilyapiskunov.wateringapp.ble.search
 
 import android.bluetooth.BluetoothDevice
-import android.content.Context
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ArrayAdapter
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
+import com.ilyapiskunov.wateringapp.R
 import kotlinx.android.synthetic.main.device_list_item.view.*
 
 class DeviceListAdapter(private val devices : List<BluetoothDevice>) :

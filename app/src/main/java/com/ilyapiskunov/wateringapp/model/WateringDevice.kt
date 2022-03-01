@@ -1,9 +1,10 @@
-package com.ilyapiskunov.wateringapp
+package com.ilyapiskunov.wateringapp.model
 
 import android.bluetooth.BluetoothDevice
 import android.util.Log
-import com.ilyapiskunov.wateringapp.connection.ConnectionEventListener
-import com.ilyapiskunov.wateringapp.connection.ConnectionManager
+import com.ilyapiskunov.wateringapp.CRCUtils
+import com.ilyapiskunov.wateringapp.ble.connection.ConnectionEventListener
+import com.ilyapiskunov.wateringapp.ble.connection.ConnectionManager
 import com.ilyapiskunov.wateringapp.exception.TimeoutException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -70,14 +71,14 @@ class WateringDevice(val bluetoothDevice : BluetoothDevice, private val deviceLi
             voltage = calculateVoltage(stateResponse.data[0])
             waterLevel = calculateWaterLevel(stateResponse.data[1])
 
-            val readChannelsCount = CommandPacket(CMD_READ_CONFIG).addByte(1).toByteArray()
+            val readChannelsCount = CommandPacket(CMD_READ_CONFIG).add(1).toByteArray()
             write(readChannelsCount)
             val countResponse = getResponse().checkStatus().checkData()
             val channelsCount = countResponse.data[0].toInt()
             if (channelsCount == 0) channels = emptyList()
             else {
 
-                val readChannels = CommandPacket(CMD_READ_CONFIG).addByte(1 + channelsCount * 8).toByteArray()
+                val readChannels = CommandPacket(CMD_READ_CONFIG).add(1 + channelsCount * 8).toByteArray()
                 write(readChannels)
                 val channelsResponse = getResponse().checkStatus().checkData()
                 val channelStream = ByteArrayInputStream(channelsResponse.data)
@@ -141,7 +142,7 @@ class WateringDevice(val bluetoothDevice : BluetoothDevice, private val deviceLi
         fun loadConfig() {
             runCommand("Load Config") {
                 val cmd = CommandPacket(CMD_LOAD_CONFIG)
-                channels.forEach { channel -> cmd.addBytes(channel.toByteArray())}
+                channels.forEach { channel -> cmd.add(channel.toByteArray())}
                 write (cmd.toByteArray())
                 getResponse().checkStatus()
             }
@@ -155,10 +156,10 @@ class WateringDevice(val bluetoothDevice : BluetoothDevice, private val deviceLi
                 var dayByte = 1 shl day
                 if (calendar.get(Calendar.WEEK_OF_YEAR) % 2 != 0)
                     dayByte = dayByte or 0x80
-                cmd.addByte(dayByte)
-                    .addByte(calendar.get(Calendar.HOUR_OF_DAY))
-                    .addByte(calendar.get(Calendar.MINUTE))
-                    .addByte(calendar.get(Calendar.SECOND))
+                cmd.add(dayByte)
+                    .add(calendar.get(Calendar.HOUR_OF_DAY))
+                    .add(calendar.get(Calendar.MINUTE))
+                    .add(calendar.get(Calendar.SECOND))
                 write(cmd.toByteArray())
                 getResponse().checkStatus()
             }
@@ -166,7 +167,7 @@ class WateringDevice(val bluetoothDevice : BluetoothDevice, private val deviceLi
 
         fun toggleChannel(on : Boolean, channel: Int) {
             runCommand("Toggle Channel") {
-                val cmd = CommandPacket(if (on) CMD_RF_ON else CMD_RF_OFF).addByte(channel).toByteArray()
+                val cmd = CommandPacket(if (on) CMD_RF_ON else CMD_RF_OFF).add(channel).toByteArray()
                 write(cmd)
                 getResponse().checkStatus()
             }
@@ -180,63 +181,7 @@ class WateringDevice(val bluetoothDevice : BluetoothDevice, private val deviceLi
             ConnectionManager.unregisterListener(eventListener)
         }
 
-        private class ResponseReader(val responseQueue: BlockingQueue<Response>) {
-            private enum class State {
-                WAITING,
-                PREFIX_RECEIVED,
-                DATA_RECEIVED
-            }
-            private val PREFIX_LENGTH = 3
-            private val DATA_LENGTH_INDEX = 2
-            private var state = State.WAITING
-            private var buffer = ByteArray(PREFIX_LENGTH)
-            private var dataLength = 0
-            private var insertIndex = 0
 
-            fun handle(payload : ByteArray) {
-                val bytes = ByteArrayInputStream(payload)
-                while (bytes.available() > 0) {
-                    buffer[insertIndex++] = bytes.read().toByte()
-                    if (insertIndex == buffer.size) {
-                        when (state) {
-                            State.WAITING -> {
-                                dataLength = buffer[DATA_LENGTH_INDEX].toInt()
-                                buffer = buffer.copyOf(PREFIX_LENGTH + dataLength + 1 /* CRC8 byte */)
-                                state = State.PREFIX_RECEIVED
-
-                            }
-                            State.PREFIX_RECEIVED -> {
-                                val crc = buffer[buffer.size - 1]
-                                val calculatedCrc =
-                                    CRCUtils.getCRC8(buffer, buffer.size - 1).toByte()
-                                val status = if (crc != calculatedCrc) ERROR_CRC else buffer[1]
-                                val data =
-                                    if (dataLength == 0) byteArrayOf() else buffer.copyOfRange(
-                                        PREFIX_LENGTH,
-                                        PREFIX_LENGTH + dataLength
-                                    )
-                                responseQueue.put(Response(status.toInt(), data))
-                                reset()
-
-                            }
-
-                            State.DATA_RECEIVED -> {
-                                //calc crc?
-                            }
-                        }
-                    }
-                }
-            }
-
-            fun reset() {
-                state = State.WAITING
-                insertIndex = 0
-                dataLength = 0
-                buffer = ByteArray(PREFIX_LENGTH)
-            }
-
-
-        }
 }
 
 

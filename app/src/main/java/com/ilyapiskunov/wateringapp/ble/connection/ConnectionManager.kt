@@ -1,4 +1,4 @@
-package com.ilyapiskunov.wateringapp.connection
+package com.ilyapiskunov.wateringapp.ble.connection
 
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothGatt
@@ -8,7 +8,6 @@ import android.content.Context
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
-import com.ilyapiskunov.wateringapp.*
 import com.ilyapiskunov.wateringapp.Tools.toHex
 import com.ilyapiskunov.wateringapp.exception.ConnectionException
 import java.lang.ref.WeakReference

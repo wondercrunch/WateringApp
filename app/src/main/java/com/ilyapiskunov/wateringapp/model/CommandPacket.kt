@@ -1,7 +1,7 @@
-package com.ilyapiskunov.wateringapp
+package com.ilyapiskunov.wateringapp.model
 
+import com.ilyapiskunov.wateringapp.CRCUtils
 import java.io.ByteArrayOutputStream
-
 const val BUS_ADDRESS = 0x81
 
 class CommandPacket(commandCode : Int) {
@@ -13,12 +13,12 @@ class CommandPacket(commandCode : Int) {
         cmdStream.write(commandCode)
     }
 
-    fun addByte(b : Int): CommandPacket {
+    fun add(b : Int): CommandPacket {
         dataStream.write(b)
         return this
     }
 
-    fun addBytes(bytes: ByteArray): CommandPacket {
+    fun add(bytes: ByteArray): CommandPacket {
         dataStream.write(bytes)
         return this
     }

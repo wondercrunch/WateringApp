@@ -4,7 +4,7 @@ import android.util.Log;
 
 import java.util.zip.Checksum;
 
-class CRCUtils {
+public class CRCUtils {
 
     private static final int CRC8_PRESET_VALUE = 0xff;
     private static final int CRC8_POLYNOMIAL = 0x8c;
@@ -20,12 +20,19 @@ class CRCUtils {
         return getCRC8(data, data.length);
     }
 
-    private static class CRC8 implements Checksum
+    public static class CRC8 implements Checksum
     {
         private final short init;
         private final short[]   crcTable = new short[256];
         private short   value;
 
+
+        /**
+         * Default constructor with default values
+         */
+        public CRC8() {
+            this(CRC8_POLYNOMIAL, CRC8_PRESET_VALUE);
+        }
         /**
          * Construct a CRC8 specifying the polynomial and initial value.
          * @param polynomial Polynomial, typically one of the POLYNOMIAL_* constants.

@@ -1,14 +1,13 @@
-package com.ilyapiskunov.wateringapp
+package com.ilyapiskunov.wateringapp.model
 
-import java.io.ByteArrayInputStream
-import java.util.*
 import kotlin.experimental.or
 
 
 class Channel (val week1 : Array<Boolean>,
                val week2 : Array<Boolean>,
                var timeOn : AlarmTime,
-               var timeOff : AlarmTime) {
+               var timeOff : AlarmTime
+) {
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

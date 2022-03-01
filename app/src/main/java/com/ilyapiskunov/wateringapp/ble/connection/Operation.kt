@@ -1,4 +1,4 @@
-package com.ilyapiskunov.wateringapp
+package com.ilyapiskunov.wateringapp.ble.connection
 
 import android.bluetooth.BluetoothDevice
 import android.content.Context
@@ -32,7 +32,7 @@ data class Write(override val device: BluetoothDevice, val data : ByteArray) : O
     }
 
     override fun toString(): String {
-        return "Write(device=$device, data=${data.toHex()})"
+        return "Write(model=$device, data=${data.toHex()})"
     }
 
 

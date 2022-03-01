@@ -1,6 +1,6 @@
-package com.ilyapiskunov.wateringapp
+package com.ilyapiskunov.wateringapp.model
 
-class DeviceEventListener {
+public class DeviceEventListener {
     lateinit var onCommandStart: ((String) -> Unit)
     lateinit var onCommandSuccess: ((String) -> Unit)
     lateinit var onCommandError: ((String, Exception) -> Unit)

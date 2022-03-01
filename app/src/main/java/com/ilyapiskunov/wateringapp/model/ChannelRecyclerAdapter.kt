@@ -1,4 +1,4 @@
-package com.ilyapiskunov.wateringapp
+package com.ilyapiskunov.wateringapp.model
 
 import android.graphics.Color
 import android.os.Handler
@@ -14,6 +14,7 @@ import android.view.ViewGroup
 import android.widget.*
 import androidx.core.view.get
 import androidx.recyclerview.widget.RecyclerView
+import com.ilyapiskunov.wateringapp.R
 import kotlinx.android.synthetic.main.channel.view.*
 import kotlinx.android.synthetic.main.time.view.*
 import java.util.*

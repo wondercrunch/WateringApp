@@ -1,4 +1,4 @@
-package com.ilyapiskunov.wateringapp
+package com.ilyapiskunov.wateringapp.model
 
 
 data class AlarmTime(var hours : Int, var minutes: Int, var seconds : Int) {

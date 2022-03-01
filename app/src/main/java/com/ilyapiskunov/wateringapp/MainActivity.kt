@@ -15,8 +15,13 @@ import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.ilyapiskunov.wateringapp.Tools.toHex
-import com.ilyapiskunov.wateringapp.connection.ConnectionEventListener
-import com.ilyapiskunov.wateringapp.connection.ConnectionManager
+import com.ilyapiskunov.wateringapp.ble.connection.ConnectionEventListener
+import com.ilyapiskunov.wateringapp.ble.connection.ConnectionManager
+import com.ilyapiskunov.wateringapp.ble.search.DeviceListActivity
+import com.ilyapiskunov.wateringapp.model.DeviceEventListener
+import com.ilyapiskunov.wateringapp.model.Channel
+import com.ilyapiskunov.wateringapp.model.ChannelRecyclerAdapter
+import com.ilyapiskunov.wateringapp.model.WateringDevice
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

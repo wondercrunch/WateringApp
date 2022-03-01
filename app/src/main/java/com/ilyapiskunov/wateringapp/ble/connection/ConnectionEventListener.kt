@@ -1,7 +1,6 @@
-package com.ilyapiskunov.wateringapp.connection
+package com.ilyapiskunov.wateringapp.ble.connection
 
 import android.bluetooth.BluetoothDevice
-import android.bluetooth.BluetoothGatt
 
 class ConnectionEventListener {
     var onConnectionSetupComplete: ((BluetoothDevice) -> Unit)? = null

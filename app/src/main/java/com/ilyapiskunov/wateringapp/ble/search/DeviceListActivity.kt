@@ -1,4 +1,4 @@
-package com.ilyapiskunov.wateringapp
+package com.ilyapiskunov.wateringapp.ble.search
 
 import android.Manifest
 import android.app.Activity
@@ -11,13 +11,11 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
-import android.view.MotionEvent
-import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
+import com.ilyapiskunov.wateringapp.MainActivity
+import com.ilyapiskunov.wateringapp.R
 import kotlinx.android.synthetic.main.device_list_layout.*
 import org.jetbrains.anko.alert
 import org.jetbrains.anko.toast
