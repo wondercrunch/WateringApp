@@ -6,13 +6,18 @@
         <entry key="../../../../layout/custom_preview.xml" value="0.10416666666666667" />
         <entry key="..\:/Java/JavaForAndroid/WateringAppNew/app/src/main/res/layout/activity_main.xml" value="0.2848731884057971" />
         <entry key="..\:/Java/JavaForAndroid/WateringAppNew/app/src/main/res/layout/channel.xml" value="0.1953125" />
+        <entry key="..\:/Java/JavaForAndroid/WateringAppNew/app/src/main/res/layout/device_list_item.xml" value="0.2848731884057971" />
+        <entry key="..\:/Java/JavaForAndroid/WateringAppNew/app/src/main/res/layout/device_list_layout.xml" value="0.2848731884057971" />
+        <entry key="..\:/Java/JavaForAndroid/WateringAppNew/app/src/main/res/layout/journal_layout.xml" value="0.3359375" />
+        <entry key="..\:/Java/JavaForAndroid/WateringAppNew/app/src/main/res/layout/journal_message.xml" value="0.3359375" />
+        <entry key="..\:/Java/JavaForAndroid/WateringAppNew/app/src/main/res/layout/main_fragment.xml" value="0.3359375" />
         <entry key="..\:/Java/JavaForAndroid/WateringAppNew/app/src/main/res/menu/menu.xml" value="0.1953125" />
         <entry key="app/src/main/res/layout/activity_main.xml" value="0.14990942028985507" />
         <entry key="app/src/main/res/layout/channel.xml" value="0.1" />
       </map>
     </option>
   </component>
-  <component name="ProjectRootManager" version="2" languageLevel="JDK_11" project-jdk-name="1.8" project-jdk-type="JavaSDK">
+  <component name="ProjectRootManager" version="2" languageLevel="JDK_11" default="true" project-jdk-name="1.8" project-jdk-type="JavaSDK">
     <output url="file://$PROJECT_DIR$/build/classes" />
   </component>
   <component name="ProjectType">

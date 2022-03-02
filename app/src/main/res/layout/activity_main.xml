@@ -8,7 +8,7 @@
 	<TextView
 		android:layout_width="0dp"
 		android:layout_height="wrap_content"
-		android:id="@+id/tvVoltage"
+		android:id="@+id/tv_voltage"
 		app:layout_constraintStart_toStartOf="parent"
 		app:layout_constraintEnd_toEndOf="parent"
 		app:layout_constraintTop_toTopOf="parent"
@@ -17,30 +17,30 @@
 	<TextView
 		android:layout_width="0dp"
 		android:layout_height="wrap_content"
-		android:id="@+id/tvWaterLevel"
+		android:id="@+id/tv_water_level"
 		app:layout_constraintStart_toStartOf="parent"
 		app:layout_constraintEnd_toEndOf="parent"
-		app:layout_constraintTop_toBottomOf="@id/tvVoltage"
-		app:layout_constraintBottom_toTopOf="@id/listChannels"
+		app:layout_constraintTop_toBottomOf="@id/tv_voltage"
+		app:layout_constraintBottom_toTopOf="@id/list_channels"
 		android:layout_marginStart="20dp"
 		/>
 
 	<androidx.recyclerview.widget.RecyclerView
 		android:layout_width="0dp"
 		android:layout_height="0dp"
-		app:layout_constraintBottom_toTopOf="@id/btnWrite"
+		app:layout_constraintBottom_toTopOf="@id/btn_write"
 		app:layout_constraintEnd_toEndOf="parent"
 		app:layout_constraintStart_toStartOf="parent"
-		app:layout_constraintTop_toBottomOf="@id/tvWaterLevel"
+		app:layout_constraintTop_toBottomOf="@id/tv_water_level"
 		tools:listitem="@layout/channel"
-		android:id="@+id/listChannels"
+		android:id="@+id/list_channels"
 		/>
 	<Button
 		android:layout_width="0dp"
 		android:layout_height="wrap_content"
-		android:id="@+id/btnWrite"
-		app:layout_constraintBottom_toTopOf="@id/log"
-		app:layout_constraintTop_toBottomOf="@id/listChannels"
+		android:id="@+id/btn_write"
+		app:layout_constraintBottom_toBottomOf="parent"
+		app:layout_constraintTop_toBottomOf="@id/list_channels"
 		app:layout_constraintStart_toStartOf="parent"
 		app:layout_constraintEnd_toEndOf="parent"
 		android:layout_marginTop="20dp"
@@ -50,13 +50,4 @@
 		android:text="@string/btnWrite"
 		/>
 
-	<ListView
-		android:layout_width="0dp"
-		android:layout_height="100dp"
-		android:id="@+id/log"
-		app:layout_constraintStart_toStartOf="parent"
-		app:layout_constraintEnd_toEndOf="parent"
-		app:layout_constraintTop_toBottomOf="@id/btnWrite"
-		app:layout_constraintBottom_toBottomOf="parent"
-		/>
 </androidx.constraintlayout.widget.ConstraintLayout>

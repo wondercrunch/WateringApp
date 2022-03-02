@@ -113,7 +113,7 @@ class ChannelRecyclerAdapter(private val channels : ArrayList<Channel>) : Recycl
         currentDevice = device
     }
 
-    class ChannelViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+    inner class ChannelViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         var tvChannelId : TextView = itemView.name
         val btnOpen : Button = itemView.btnOpen
         val btnClose : Button = itemView.btnClose

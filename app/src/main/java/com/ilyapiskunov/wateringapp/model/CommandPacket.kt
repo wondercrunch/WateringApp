@@ -2,14 +2,14 @@ package com.ilyapiskunov.wateringapp.model
 
 import com.ilyapiskunov.wateringapp.CRCUtils
 import java.io.ByteArrayOutputStream
-const val BUS_ADDRESS = 0x81
 
 class CommandPacket(commandCode : Int) {
+    private val DUMMY_BYTE = 0x81
     private val cmdStream : ByteArrayOutputStream = ByteArrayOutputStream()
     private val dataStream : ByteArrayOutputStream = ByteArrayOutputStream()
 
     init {
-        cmdStream.write(BUS_ADDRESS)
+        cmdStream.write(DUMMY_BYTE)
         cmdStream.write(commandCode)
     }
 

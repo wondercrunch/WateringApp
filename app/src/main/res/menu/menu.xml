@@ -3,9 +3,13 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <item
-        android:id="@+id/current_device"
-        android:title="@string/device_name_holder"
+        android:id="@+id/menu_current_device"
+        android:title="@string/menu_current_device"
         app:showAsAction="ifRoom"
         />
-
+    <item
+        android:id="@+id/menu_journal"
+        android:title="@string/menu_journal"
+        app:showAsAction="never"
+        />
 </menu>

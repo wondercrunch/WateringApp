@@ -18,6 +18,8 @@ import com.ilyapiskunov.wateringapp.Tools.toHex
 import com.ilyapiskunov.wateringapp.ble.connection.ConnectionEventListener
 import com.ilyapiskunov.wateringapp.ble.connection.ConnectionManager
 import com.ilyapiskunov.wateringapp.ble.search.DeviceListActivity
+import com.ilyapiskunov.wateringapp.journal.JournalActivity
+import com.ilyapiskunov.wateringapp.journal.JournalMessage
 import com.ilyapiskunov.wateringapp.model.DeviceEventListener
 import com.ilyapiskunov.wateringapp.model.Channel
 import com.ilyapiskunov.wateringapp.model.ChannelRecyclerAdapter
@@ -49,7 +51,7 @@ class MainActivity : AppCompatActivity() {
 
     private var currentDevice : WateringDevice? = null
     private val channels = ArrayList<Channel>()
-    private val messages = ArrayList<String>()
+    private val messages = ArrayList<JournalMessage>()
     private val channelsAdapter = ChannelRecyclerAdapter(channels)
     private lateinit var logAdapter : ArrayAdapter<String>
     private val devices : LinkedList<WateringDevice> = LinkedList()
@@ -62,12 +64,12 @@ class MainActivity : AppCompatActivity() {
         ModelPreferencesManager.with(this)
         setContentView(R.layout.activity_main)
         //Log.i(TAG, "Channels size: " + channels.size)
-        listChannels.adapter = channelsAdapter
-        listChannels.layoutManager = LinearLayoutManager(this)
+        list_channels.adapter = channelsAdapter
+        list_channels.layoutManager = LinearLayoutManager(this)
         //listChannels.setHasFixedSize(true)
         val separator = DividerItemDecoration(this, LinearLayout.VERTICAL)
         separator.setDrawable(ContextCompat.getDrawable(this, R.drawable.divider)!!)
-        listChannels.addItemDecoration(separator)
+        list_channels.addItemDecoration(separator)
 
         bluetoothAdapter = BluetoothAdapter.getDefaultAdapter()
 
@@ -81,7 +83,7 @@ class MainActivity : AppCompatActivity() {
             startActivityForResult(enableBluetoothIntent, REQUEST_ENABLE_BT)
         }
 
-        btnWrite.setOnClickListener {
+        btn_write.setOnClickListener {
             currentDevice?.let {
                 device ->
                 device.loadConfig()
@@ -89,9 +91,7 @@ class MainActivity : AppCompatActivity() {
             } ?: alertDeviceNotConnected()
         }
 
-        logAdapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, messages)
-        log.adapter = logAdapter
-
+        journal("Старт")
         //DEBUG
         //channels.add(Channel(Array(7) {false}, Array(7) {false}, AlarmTime(0, 0, 0), AlarmTime(0, 0, 0)))
 
@@ -108,13 +108,13 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onPrepareOptionsMenu(menu: Menu?): Boolean {
-        menuSelectDevice = menu?.findItem(R.id.current_device)!!
+        menuSelectDevice = menu?.findItem(R.id.menu_current_device)!!
         return super.onPrepareOptionsMenu(menu)
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         val id = item.itemId
-        if (id == R.id.current_device) {
+        if (id == R.id.menu_current_device) {
             if (devices.isNotEmpty()) {
                 AlertDialog.Builder(this)
                     .setTitle("Устройства")
@@ -133,12 +133,21 @@ class MainActivity : AppCompatActivity() {
             else startSearchActivity()
             return true
         }
+        else if (id == R.id.menu_journal) {
+            startJournalActivity()
+        }
         return super.onOptionsItemSelected(item)
     }
 
     private fun startSearchActivity() {
         val deviceListIntent = Intent(this, DeviceListActivity::class.java)
         startActivityForResult(deviceListIntent, REQUEST_CONNECT_DEVICE)
+    }
+
+    private fun startJournalActivity() {
+        val journalIntent = Intent(this, JournalActivity::class.java)
+        journalIntent.putExtra("messages", messages)
+        startActivity(journalIntent)
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -174,8 +183,8 @@ class MainActivity : AppCompatActivity() {
             currentDevice = device
             channelsAdapter.setCurrentDevice(device)
             menuSelectDevice.title = device.name
-            tvVoltage.text = getString(R.string.voltage_format, device.voltage)
-            tvWaterLevel.text = getString(R.string.water_level_format, device.waterLevel)
+            tv_voltage.text = getString(R.string.voltage_format, device.voltage)
+            tv_water_level.text = getString(R.string.water_level_format, device.waterLevel)
             channels.clear()
             channels.addAll(device.channels)
             channelsAdapter.notifyDataSetChanged()
@@ -188,9 +197,9 @@ class MainActivity : AppCompatActivity() {
         runOnUiThread {
             currentDevice = null
             channelsAdapter.setCurrentDevice(null)
-            menuSelectDevice.setTitle(R.string.device_name_holder)
-            tvVoltage.text = ""
-            tvWaterLevel.text = ""
+            menuSelectDevice.setTitle(R.string.menu_current_device)
+            tv_voltage.text = ""
+            tv_water_level.text = ""
             channels.clear()
             channelsAdapter.notifyDataSetChanged()
         }
@@ -243,10 +252,11 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun journal(message: String) {
-        runOnUiThread {
-            messages.add(message)
-            logAdapter.notifyDataSetChanged()
-        }
+        journal("Система", message)
+    }
+
+    private fun journal(header: String, message: String) {
+        messages.add(JournalMessage(header, message))
     }
 
     private val connectionEventListener by lazy {
@@ -294,13 +304,13 @@ class MainActivity : AppCompatActivity() {
             onRead = {
                 bluetoothDevice, bytes ->
                 runOnUiThread {
-                    journal("RX: ${bytes.toHex()}")
+                    journal("RX", bytes.toHex())
                 }
             }
 
             onWrite = {
                 bluetoothDevice, bytes ->
-                journal("TX: ${bytes.toHex()}")
+                journal("TX", bytes.toHex())
             }
         }
     }

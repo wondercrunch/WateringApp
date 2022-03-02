@@ -25,6 +25,7 @@
 			</intent-filter>
 		</activity>
 		<activity android:name=".ble.search.DeviceListActivity" android:screenOrientation="portrait"/>
+		<activity android:name=".journal.JournalActivity" android:screenOrientation="portrait"/>
 
 	</application>
 

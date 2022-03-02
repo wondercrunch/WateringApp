@@ -59,6 +59,7 @@ class DeviceListActivity : Activity() {
         setContentView(R.layout.device_list_layout)
         list_devices.adapter = devicesAdapter
         list_devices.layoutManager = LinearLayoutManager(this)
+
         devicesAdapter.onItemClick = { bluetoothDevice ->
             if (isScanning) stopBleScan()
             intent = Intent()
@@ -76,8 +77,13 @@ class DeviceListActivity : Activity() {
             else
                 startBleScan()
         }
-        startBleScan()
 
+
+    }
+
+    override fun onStart() {
+        super.onStart()
+        startBleScan()
     }
 
     override fun onBackPressed() {
