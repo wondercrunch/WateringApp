@@ -6,11 +6,15 @@ import android.bluetooth.*
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.text.InputFilter
+import android.text.InputType
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.widget.ArrayAdapter
+import android.widget.EditText
 import android.widget.LinearLayout
+import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -31,6 +35,8 @@ import kotlinx.coroutines.launch
 import org.jetbrains.anko.alert
 import org.jetbrains.anko.toast
 import java.lang.Exception
+import java.nio.charset.Charset
+import java.nio.charset.StandardCharsets
 import java.util.*
 import kotlin.collections.ArrayList
 
@@ -53,7 +59,6 @@ class MainActivity : AppCompatActivity() {
     private val channels = ArrayList<Channel>()
     private val messages = ArrayList<JournalMessage>()
     private val channelsAdapter = ChannelRecyclerAdapter(channels)
-    private lateinit var logAdapter : ArrayAdapter<String>
     private val devices : LinkedList<WateringDevice> = LinkedList()
     private lateinit var menuSelectDevice: MenuItem
 
@@ -87,7 +92,7 @@ class MainActivity : AppCompatActivity() {
             currentDevice?.let {
                 device ->
                 device.loadConfig()
-                device.setTime()
+                device.setTime(GregorianCalendar.getInstance())
             } ?: alertDeviceNotConnected()
         }
 
@@ -113,28 +118,42 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        val id = item.itemId
-        if (id == R.id.menu_current_device) {
-            if (devices.isNotEmpty()) {
-                AlertDialog.Builder(this)
-                    .setTitle("Устройства")
-                    .setItems(devices.map { device -> device.name }
-                        .toTypedArray()) { _, index ->
-                        val selected = devices[index]
-                        if (currentDevice != selected)
-                            onDeviceSelected(selected)
-                        else
-                            selected.disconnect()
-
-                    }.setPositiveButton("Поиск") { dialogInterface, i ->
-                        startSearchActivity()
-                    }.show()
+        when (item.itemId) {
+            R.id.menu_current_device -> {
+                if (currentDevice != null) {
+                    val input = EditText(this)
+                    input.inputType = InputType.TYPE_CLASS_TEXT
+                    input.setText(currentDevice!!.name, TextView.BufferType.EDITABLE)
+                    AlertDialog.Builder(this)
+                        .setTitle("Введите новое имя")
+                        .setView(input)
+                        .setPositiveButton("ОК") { dialog, i ->
+                            currentDevice!!.setDeviceName(input.text.toString())
+                        }
+                }
+                else alertDeviceNotConnected()
             }
-            else startSearchActivity()
-            return true
-        }
-        else if (id == R.id.menu_journal) {
-            startJournalActivity()
+            R.id.menu_search -> {
+                if (devices.isNotEmpty()) {
+                    AlertDialog.Builder(this)
+                        .setTitle("Устройства")
+                        .setItems(devices.map { device -> device.name }
+                            .toTypedArray()) { _, index ->
+                            val selected = devices[index]
+                            if (currentDevice != selected)
+                                onDeviceSelected(selected)
+                            else
+                                selected.disconnect()
+
+                        }.setNeutralButton("Поиск") { dialog, i ->
+                            startSearchActivity()
+                        }.show()
+                } else startSearchActivity()
+                return true
+            }
+            R.id.menu_journal -> {
+                startJournalActivity()
+            }
         }
         return super.onOptionsItemSelected(item)
     }
@@ -229,27 +248,31 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+
+
     private val deviceEventListener by lazy {
         DeviceEventListener().apply {
 
-            onCommandStart = {
-                name ->
-                journal("Команда $name")
+            onCommandStart = { device, cmd ->
+                journal(device.name, "Команда $cmd")
             }
 
-            onCommandSuccess = {
+            onCommandSuccess = { device, cmd ->
+                journal(device.name, "Команда $cmd выполнена")
                 runOnUiThread {
                     toast("OK")
                 }
             }
 
-            onCommandError = {
-                name, exception ->
+            onCommandError = { device, cmd, exception ->
+                journal(device.name, "Ошибка при выполнении команды $cmd - ${exception.message}")
                 exception.printStackTrace()
                 alertError(exception.message)
             }
         }
     }
+
+
 
     private fun journal(message: String) {
         journal("Система", message)
@@ -265,7 +288,7 @@ class MainActivity : AppCompatActivity() {
                 bluetoothDevice ->
                 CoroutineScope(Dispatchers.IO).launch {
                     try {
-                        journal("Установлено соединение с ${bluetoothDevice.name}")
+                        journal("Установлено соединение с ${bluetoothDevice.address}")
                         val connectedDevice = WateringDevice(bluetoothDevice, deviceEventListener)
                         devices.add(connectedDevice)
                         onDeviceSelected(connectedDevice)
@@ -304,13 +327,13 @@ class MainActivity : AppCompatActivity() {
             onRead = {
                 bluetoothDevice, bytes ->
                 runOnUiThread {
-                    journal("RX", bytes.toHex())
+                    journal("RX", bytes.toHex(" "))
                 }
             }
 
             onWrite = {
                 bluetoothDevice, bytes ->
-                journal("TX", bytes.toHex())
+                journal("TX", bytes.toHex(" "))
             }
         }
     }

@@ -219,7 +219,7 @@ object ConnectionManager {
             characteristic: BluetoothGattCharacteristic
         ) {
             with (characteristic) {
-                Log.i("BluetoothGattCallback", "characteristic $uuid changed, new value = ${value.toHex()}")
+                Log.i("BluetoothGattCallback", "characteristic $uuid changed, new value = ${value.toHex(" ")}")
                 if (uuid == serialCharacteristicUUID) {
                     //replyQueue.put(value)
                     listeners.forEach { ref -> ref.get()?.onRead?.invoke(gatt.device, value) }

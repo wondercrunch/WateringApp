@@ -2,7 +2,6 @@ package com.ilyapiskunov.wateringapp.model
 
 import android.bluetooth.BluetoothDevice
 import android.util.Log
-import com.ilyapiskunov.wateringapp.CRCUtils
 import com.ilyapiskunov.wateringapp.ble.connection.ConnectionEventListener
 import com.ilyapiskunov.wateringapp.ble.connection.ConnectionManager
 import com.ilyapiskunov.wateringapp.exception.TimeoutException
@@ -12,6 +11,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.io.ByteArrayInputStream
+import java.nio.charset.Charset
 import java.nio.charset.StandardCharsets
 import java.util.*
 
@@ -21,18 +21,14 @@ import java.util.concurrent.TimeUnit
 
 const val ERROR_CRC = 0x03
 
-const val CMD_READ_CONFIG = 0x86
-const val CMD_LOAD_CONFIG = 0x84
-const val CMD_IDENTIFY = 0x8A
-const val CMD_GET_STATE = 0x6E
-const val CMD_RF_ON = 0x68
-const val CMD_RF_OFF = 0x6A
-const val CMD_SET_TIME = 0x70
+//
 const val DEFAULT_TIMEOUT = 1000L
 class WateringDevice(val bluetoothDevice : BluetoothDevice, private val deviceListener : DeviceEventListener) {
     val waterLevel : Int
     val voltage : Float
-    val name : String
+    var name : String
+    val mcuVersion : ByteArray
+    val mcuId : ByteArray
 
     private val commandLock = Mutex() //for sequential execution
     private val responseQueue : BlockingQueue<Response> = LinkedBlockingQueue()
@@ -61,24 +57,27 @@ class WateringDevice(val bluetoothDevice : BluetoothDevice, private val deviceLi
     val channels : List<Channel>
 
         init {
-            ConnectionManager.registerListener(eventListener)
-            write(CommandPacket(CMD_IDENTIFY).toByteArray())
-            val nameResponse = getResponse().checkStatus()
-            name = String(nameResponse.data, 0, 10, StandardCharsets.UTF_8)
 
-            write(CommandPacket(CMD_GET_STATE).toByteArray())
+            ConnectionManager.registerListener(eventListener)
+            write(CommandPacket(CMD_IDENTIFY))
+            val mcuInfoResponse = getResponse().checkStatus()
+            name = String(mcuInfoResponse.data, 0, 20, StandardCharsets.UTF_8)
+            mcuVersion = mcuInfoResponse.data.copyOfRange(10, 12)
+            mcuId = mcuInfoResponse.data.copyOfRange(12, 14)
+
+            write(CommandPacket(CMD_GET_STATE))
             val stateResponse = getResponse().checkStatus().checkData()
             voltage = calculateVoltage(stateResponse.data[0])
             waterLevel = calculateWaterLevel(stateResponse.data[1])
 
-            val readChannelsCount = CommandPacket(CMD_READ_CONFIG).add(1).toByteArray()
+            val readChannelsCount = CommandPacket(CMD_READ_CONFIG).add(1)
             write(readChannelsCount)
             val countResponse = getResponse().checkStatus().checkData()
             val channelsCount = countResponse.data[0].toInt()
             if (channelsCount == 0) channels = emptyList()
             else {
 
-                val readChannels = CommandPacket(CMD_READ_CONFIG).add(1 + channelsCount * 8).toByteArray()
+                val readChannels = CommandPacket(CMD_READ_CONFIG).add(1 + channelsCount * 8)
                 write(readChannels)
                 val channelsResponse = getResponse().checkStatus().checkData()
                 val channelStream = ByteArrayInputStream(channelsResponse.data)
@@ -96,6 +95,8 @@ class WateringDevice(val bluetoothDevice : BluetoothDevice, private val deviceLi
             }
         }
 
+
+
         private fun calculateWaterLevel(raw : Byte) : Int {
             return when {
                 raw < 17 -> 40
@@ -110,8 +111,8 @@ class WateringDevice(val bluetoothDevice : BluetoothDevice, private val deviceLi
             return raw.toUByte().toFloat() * 0.02664f
         }
 
-        private fun write(cmd : ByteArray) {
-            ConnectionManager.write(bluetoothDevice, cmd)
+        private fun write(packet : CommandPacket) {
+            ConnectionManager.write(bluetoothDevice, packet.toByteArray())
         }
 
         private fun getResponse(timeout: Long) : Response {
@@ -124,53 +125,80 @@ class WateringDevice(val bluetoothDevice : BluetoothDevice, private val deviceLi
             return getResponse(DEFAULT_TIMEOUT)
         }
 
-        private fun runCommand(name : String, command: suspend () -> Unit) {
+        private fun writeAndGetValidResponse(packet : CommandPacket) : Response {
+            write(packet)
+            return getResponse().checkStatus()
+        }
+
+        private fun runCommand(command: Command) {
             scope.launch(Dispatchers.IO) {
                 commandLock.withLock {
                     try {
-                        Log.i("SprinklerDevice", "Running command: $name")
-                        deviceListener.onCommandStart.invoke(name)
-                        command()
-                        deviceListener.onCommandSuccess.invoke(name)
+                        Log.i("SprinklerDevice", "Running command: $command")
+                        deviceListener.onCommandStart.invoke(this@WateringDevice, command)
+                        when (command) {
+                            is LoadConfig -> with(command) {
+                                channels.forEach { channel -> packet.add(channel.toByteArray())}
+                            }
+
+                            is SetTime -> with(command) {
+                                val day = (time.get(Calendar.DAY_OF_WEEK) - 2).mod(7) //0..6
+                                var dayByte = 1 shl day
+                                if (time.get(Calendar.WEEK_OF_YEAR) % 2 != 0)
+                                    dayByte = dayByte or 0x80
+                                packet.add(dayByte)
+                                    .add(time.get(Calendar.HOUR_OF_DAY))
+                                    .add(time.get(Calendar.MINUTE))
+                                    .add(time.get(Calendar.SECOND))
+                                writeAndGetValidResponse(packet)
+                            }
+
+                            is ToggleChannel -> with(command) {
+                                packet.add(channel)
+                                writeAndGetValidResponse(packet)
+                            }
+
+                            is SetName -> with(command) {
+                                packet.add(name.toByteArray(Charset.forName("KOI8-R")))
+                                writeAndGetValidResponse(packet)
+                                this@WateringDevice.name = name
+                            }
+                            is GetState -> {
+
+
+                            }
+                            is Identify -> {
+
+
+                            }
+                            is ReadConfig -> {
+
+
+                            }
+                        }
+
+                        deviceListener.onCommandSuccess.invoke(this@WateringDevice, command)
                     } catch (e : Exception) {
-                        deviceListener.onCommandError.invoke(name, e)
+                        deviceListener.onCommandError.invoke(this@WateringDevice, command, e)
                     }
                 }
             }
         }
 
         fun loadConfig() {
-            runCommand("Load Config") {
-                val cmd = CommandPacket(CMD_LOAD_CONFIG)
-                channels.forEach { channel -> cmd.add(channel.toByteArray())}
-                write (cmd.toByteArray())
-                getResponse().checkStatus()
-            }
+            runCommand(LoadConfig())
         }
 
-        fun setTime() {
-            runCommand("Set Time") {
-                val cmd = CommandPacket(CMD_SET_TIME)
-                val calendar = Calendar.getInstance()
-                val day = (calendar.get(Calendar.DAY_OF_WEEK) - 2).mod(7) //0..6
-                var dayByte = 1 shl day
-                if (calendar.get(Calendar.WEEK_OF_YEAR) % 2 != 0)
-                    dayByte = dayByte or 0x80
-                cmd.add(dayByte)
-                    .add(calendar.get(Calendar.HOUR_OF_DAY))
-                    .add(calendar.get(Calendar.MINUTE))
-                    .add(calendar.get(Calendar.SECOND))
-                write(cmd.toByteArray())
-                getResponse().checkStatus()
-            }
+        fun setTime(time: Calendar) {
+            runCommand(SetTime(time))
         }
 
         fun toggleChannel(on : Boolean, channel: Int) {
-            runCommand("Toggle Channel") {
-                val cmd = CommandPacket(if (on) CMD_RF_ON else CMD_RF_OFF).add(channel).toByteArray()
-                write(cmd)
-                getResponse().checkStatus()
-            }
+            runCommand(ToggleChannel(channel, on))
+        }
+
+        fun setDeviceName(name : String) {
+            runCommand(SetName(name))
         }
 
         fun disconnect() {
@@ -180,6 +208,9 @@ class WateringDevice(val bluetoothDevice : BluetoothDevice, private val deviceLi
         fun unregisterListener() {
             ConnectionManager.unregisterListener(eventListener)
         }
+
+
+
 
 
 }

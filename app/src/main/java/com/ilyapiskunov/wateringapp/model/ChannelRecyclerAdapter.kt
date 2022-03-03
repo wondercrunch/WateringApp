@@ -101,11 +101,11 @@ class ChannelRecyclerAdapter(private val channels : ArrayList<Channel>) : Recycl
         setTimeControlButtonListener(holderTimeOff.btnDecSec, holderTimeOff.editSec, position) {timeOff.decSeconds() }
 
         holder.btnOpen.setOnClickListener {
-            currentDevice?.toggleChannel(true, position)
+            currentDevice?.toggleChannel(true, position + 1)
         }
 
         holder.btnClose.setOnClickListener {
-            currentDevice?.toggleChannel(false, position)
+            currentDevice?.toggleChannel(false, position + 1)
         }
     }
 
