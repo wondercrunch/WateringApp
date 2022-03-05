@@ -130,7 +130,7 @@ class WateringDevice(val bluetoothDevice : BluetoothDevice, private val deviceLi
             return getResponse().checkStatus()
         }
 
-        private fun runCommand(command: Command) {
+        private fun runCommand(command: Command, callback: (() -> Unit)? = null) {
             scope.launch(Dispatchers.IO) {
                 commandLock.withLock {
                     try {
@@ -163,20 +163,10 @@ class WateringDevice(val bluetoothDevice : BluetoothDevice, private val deviceLi
                                 writeAndGetValidResponse(packet)
                                 this@WateringDevice.name = name
                             }
-                            is GetState -> {
-
-
-                            }
-                            is Identify -> {
-
-
-                            }
-                            is ReadConfig -> {
-
-
-                            }
+                            else ->
+                                return@launch
                         }
-
+                        callback?.invoke()
                         deviceListener.onCommandSuccess.invoke(this@WateringDevice, command)
                     } catch (e : Exception) {
                         deviceListener.onCommandError.invoke(this@WateringDevice, command, e)
@@ -185,20 +175,20 @@ class WateringDevice(val bluetoothDevice : BluetoothDevice, private val deviceLi
             }
         }
 
-        fun loadConfig() {
-            runCommand(LoadConfig())
+        fun loadConfig(callback: (() -> Unit)? = null) {
+            runCommand(LoadConfig(), callback)
         }
 
-        fun setTime(time: Calendar) {
-            runCommand(SetTime(time))
+        fun setTime(time: Calendar, callback: (() -> Unit)? = null) {
+            runCommand(SetTime(time), callback)
         }
 
-        fun toggleChannel(on : Boolean, channel: Int) {
-            runCommand(ToggleChannel(channel, on))
+        fun toggleChannel(on : Boolean, channel: Int, callback: (() -> Unit)? = null) {
+            runCommand(ToggleChannel(channel, on), callback)
         }
 
-        fun setDeviceName(name : String) {
-            runCommand(SetName(name))
+        fun setDeviceName(name : String, callback: (() -> Unit)? = null) {
+            runCommand(SetName(name), callback)
         }
 
         fun disconnect() {

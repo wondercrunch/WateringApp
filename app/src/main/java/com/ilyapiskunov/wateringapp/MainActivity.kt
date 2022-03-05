@@ -6,12 +6,10 @@ import android.bluetooth.*
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.text.InputFilter
 import android.text.InputType
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
-import android.widget.ArrayAdapter
 import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.TextView
@@ -35,8 +33,6 @@ import kotlinx.coroutines.launch
 import org.jetbrains.anko.alert
 import org.jetbrains.anko.toast
 import java.lang.Exception
-import java.nio.charset.Charset
-import java.nio.charset.StandardCharsets
 import java.util.*
 import kotlin.collections.ArrayList
 
@@ -60,7 +56,7 @@ class MainActivity : AppCompatActivity() {
     private val messages = ArrayList<JournalMessage>()
     private val channelsAdapter = ChannelRecyclerAdapter(channels)
     private val devices : LinkedList<WateringDevice> = LinkedList()
-    private lateinit var menuSelectDevice: MenuItem
+    private lateinit var menuCurrentDevice: MenuItem
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -113,25 +109,32 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onPrepareOptionsMenu(menu: Menu?): Boolean {
-        menuSelectDevice = menu?.findItem(R.id.menu_current_device)!!
+        menuCurrentDevice = menu?.findItem(R.id.menu_current_device)!!
         return super.onPrepareOptionsMenu(menu)
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             R.id.menu_current_device -> {
-                if (currentDevice != null) {
+                currentDevice?.let { device ->
                     val input = EditText(this)
                     input.inputType = InputType.TYPE_CLASS_TEXT
-                    input.setText(currentDevice!!.name, TextView.BufferType.EDITABLE)
+                    input.setText(device.name, TextView.BufferType.EDITABLE)
                     AlertDialog.Builder(this)
                         .setTitle("Введите новое имя")
                         .setView(input)
                         .setPositiveButton("ОК") { dialog, i ->
-                            currentDevice!!.setDeviceName(input.text.toString())
+                            device.setDeviceName(input.text.toString()) {
+                                runOnUiThread {
+                                    menuCurrentDevice.title = device.name
+                                }
+                            }
                         }
-                }
-                else alertDeviceNotConnected()
+                        .setNegativeButton("Отмена") { dialog, i ->
+                            dialog.cancel()
+                        }
+                        .show()
+                } ?: alertDeviceNotConnected()
             }
             R.id.menu_search -> {
                 if (devices.isNotEmpty()) {
@@ -145,9 +148,12 @@ class MainActivity : AppCompatActivity() {
                             else
                                 selected.disconnect()
 
-                        }.setNeutralButton("Поиск") { dialog, i ->
+                        }.setPositiveButton("Поиск") { dialog, i ->
                             startSearchActivity()
-                        }.show()
+                        }.setNegativeButton("Отмена") { dialog, i ->
+                            dialog.cancel()
+                        }
+                        .show()
                 } else startSearchActivity()
                 return true
             }
@@ -201,7 +207,7 @@ class MainActivity : AppCompatActivity() {
         runOnUiThread {
             currentDevice = device
             channelsAdapter.setCurrentDevice(device)
-            menuSelectDevice.title = device.name
+            menuCurrentDevice.title = device.name
             tv_voltage.text = getString(R.string.voltage_format, device.voltage)
             tv_water_level.text = getString(R.string.water_level_format, device.waterLevel)
             channels.clear()
@@ -216,7 +222,7 @@ class MainActivity : AppCompatActivity() {
         runOnUiThread {
             currentDevice = null
             channelsAdapter.setCurrentDevice(null)
-            menuSelectDevice.setTitle(R.string.menu_current_device)
+            menuCurrentDevice.setTitle(R.string.menu_current_device)
             tv_voltage.text = ""
             tv_water_level.text = ""
             channels.clear()
