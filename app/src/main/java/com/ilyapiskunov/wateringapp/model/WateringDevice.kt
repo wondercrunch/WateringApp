@@ -61,7 +61,7 @@ class WateringDevice(val bluetoothDevice : BluetoothDevice, private val deviceLi
             ConnectionManager.registerListener(eventListener)
             write(CommandPacket(CMD_IDENTIFY))
             val mcuInfoResponse = getResponse().checkStatus()
-            name = String(mcuInfoResponse.data, 0, 20, StandardCharsets.UTF_8)
+            name = String(mcuInfoResponse.data, 0, 10, StandardCharsets.UTF_8)
             mcuVersion = mcuInfoResponse.data.copyOfRange(10, 12)
             mcuId = mcuInfoResponse.data.copyOfRange(12, 14)
 

@@ -210,6 +210,7 @@ class MainActivity : AppCompatActivity() {
             menuCurrentDevice.title = device.name
             tv_voltage.text = getString(R.string.voltage_format, device.voltage)
             tv_water_level.text = getString(R.string.water_level_format, device.waterLevel)
+            tv_version_id.text = getString(R.string.device_version_id_format, device.mcuVersion.toHex(""), device.mcuId.toHex(""))
             channels.clear()
             channels.addAll(device.channels)
             channelsAdapter.notifyDataSetChanged()
@@ -225,6 +226,7 @@ class MainActivity : AppCompatActivity() {
             menuCurrentDevice.setTitle(R.string.menu_current_device)
             tv_voltage.text = ""
             tv_water_level.text = ""
+            tv_version_id.text = ""
             channels.clear()
             channelsAdapter.notifyDataSetChanged()
         }

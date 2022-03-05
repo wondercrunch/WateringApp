@@ -16,7 +16,7 @@ class Response(val status: Int, val data: ByteArray) {
     }
 
     override fun toString(): String {
-        return "status=${status.toString(16)}, data=${data.toHex()}"
+        return "status=${status.toString(16)}, data=${data.toHex(" ")}"
     }
 
 

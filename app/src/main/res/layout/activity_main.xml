@@ -8,10 +8,21 @@
 	<TextView
 		android:layout_width="0dp"
 		android:layout_height="wrap_content"
-		android:id="@+id/tv_voltage"
+		android:id="@+id/tv_version_id"
 		app:layout_constraintStart_toStartOf="parent"
 		app:layout_constraintEnd_toEndOf="parent"
 		app:layout_constraintTop_toTopOf="parent"
+		app:layout_constraintBottom_toTopOf="@id/tv_voltage"
+		android:layout_marginStart="20dp"
+		/>
+
+	<TextView
+		android:layout_width="0dp"
+		android:layout_height="wrap_content"
+		android:id="@+id/tv_voltage"
+		app:layout_constraintStart_toStartOf="parent"
+		app:layout_constraintEnd_toEndOf="parent"
+		app:layout_constraintTop_toBottomOf="@id/tv_version_id"
 		android:layout_marginStart="20dp"
 		/>
 	<TextView
