@@ -71,14 +71,14 @@ class WateringDevice(val bluetoothDevice : BluetoothDevice, private val deviceLi
             voltage = calculateVoltage(stateResponse.data[0])
             waterLevel = calculateWaterLevel(stateResponse.data[1])
 
-            val readChannelsCount = CommandPacket(CMD_READ_CONFIG).add(1)
+            val readChannelsCount = CommandPacket(CMD_READ_CONFIG).put(1)
             write(readChannelsCount)
             val countResponse = getResponse().checkStatus().checkData()
             val channelsCount = countResponse.data[0].toInt()
             if (channelsCount == 0) channels = emptyList()
             else {
 
-                val readChannels = CommandPacket(CMD_READ_CONFIG).add(1 + channelsCount * 8)
+                val readChannels = CommandPacket(CMD_READ_CONFIG).put(1 + channelsCount * 8)
                 write(readChannels)
                 val channelsResponse = getResponse().checkStatus().checkData()
                 val channelStream = ByteArrayInputStream(channelsResponse.data)
@@ -149,7 +149,7 @@ class WateringDevice(val bluetoothDevice : BluetoothDevice, private val deviceLi
         fun loadConfig(callback: (() -> Unit)? = null) {
             runCommand("Load Config") {
                 val packet = CommandPacket(CMD_LOAD_CONFIG)
-                channels.forEach { channel -> packet.add(channel.toByteArray())}
+                channels.forEach { channel -> packet.put(channel.toByteArray())}
                 writeAndGetValidResponse(packet)
                 callback?.invoke()
             }
@@ -162,10 +162,10 @@ class WateringDevice(val bluetoothDevice : BluetoothDevice, private val deviceLi
                 var dayByte = 1 shl day
                 if (time.get(Calendar.WEEK_OF_YEAR) % 2 != 0)
                     dayByte = dayByte or 0x80
-                packet.add(dayByte)
-                    .add(time.get(Calendar.HOUR_OF_DAY))
-                    .add(time.get(Calendar.MINUTE))
-                    .add(time.get(Calendar.SECOND))
+                packet.put(dayByte)
+                    .put(time.get(Calendar.HOUR_OF_DAY))
+                    .put(time.get(Calendar.MINUTE))
+                    .put(time.get(Calendar.SECOND))
                 writeAndGetValidResponse(packet)
                 callback?.invoke()
             }
@@ -174,7 +174,7 @@ class WateringDevice(val bluetoothDevice : BluetoothDevice, private val deviceLi
         fun toggleChannel(on : Boolean, channel: Int, callback: (() -> Unit)? = null) {
             runCommand("Toggle Channel") {
                 val packet = CommandPacket(if (on) CMD_RF_ON else CMD_RF_OFF)
-                packet.add(channel)
+                packet.put(channel)
                 writeAndGetValidResponse(packet)
                 callback?.invoke()
             }
@@ -183,7 +183,7 @@ class WateringDevice(val bluetoothDevice : BluetoothDevice, private val deviceLi
         fun setDeviceName(name : String, callback: (() -> Unit)? = null) {
             runCommand("Set Name") {
                 val packet = CommandPacket(CMD_SET_NAME)
-                packet.add(name.toByteArray(Charset.forName("KOI8-R")))
+                packet.put(name.toByteArray(Charset.forName("KOI8-R")))
                 writeAndGetValidResponse(packet)
                 synchronized(this.name) {
                     this.name = name

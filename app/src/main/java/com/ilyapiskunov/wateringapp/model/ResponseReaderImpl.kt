@@ -1,8 +1,8 @@
 package com.ilyapiskunov.wateringapp.model
 
 import com.ilyapiskunov.wateringapp.CRCUtils
+
 import java.io.ByteArrayInputStream
-import java.util.concurrent.BlockingQueue
 
 class ResponseReaderImpl : ResponseReader {
 
@@ -12,13 +12,9 @@ class ResponseReaderImpl : ResponseReader {
         DATA_RECEIVED
     }
 
-    private val PREFIX_LENGTH = 3
-    private val DATA_LENGTH_OFFSET = 2
-    private val DATA_LENGTH_BYTE_SIZE = 1
-    private val CRC_BYTE_SIZE = 1
 
     private var state = State.WAITING
-    private var buffer = ByteArray(PREFIX_LENGTH)
+    private var buffer = ByteArray(PacketFormat.PREFIX_LENGTH)
     private var dataLength = 0
     private var insertIndex = 0
 
@@ -29,21 +25,21 @@ class ResponseReaderImpl : ResponseReader {
             if (insertIndex == buffer.size) {
                 when (state) {
                     State.WAITING -> {
-                        dataLength = extractValue(DATA_LENGTH_OFFSET, DATA_LENGTH_BYTE_SIZE)
-                        buffer = buffer.copyOf(PREFIX_LENGTH + dataLength + CRC_BYTE_SIZE /* CRC8 byte */)
+                        dataLength = buffer.getValue(PacketFormat.DATA_LENGTH_OFFSET, PacketFormat.DATA_LENGTH_BYTE_SIZE)
+                        buffer = buffer.copyOf(PacketFormat.PREFIX_LENGTH + dataLength + PacketFormat.CRC_BYTE_SIZE /* CRC8 byte */)
                         state = State.PREFIX_RECEIVED
 
                     }
                     State.PREFIX_RECEIVED -> {
-                        val crc = extractValue(buffer.size - CRC_BYTE_SIZE, CRC_BYTE_SIZE).toByte()
+                        val crc = buffer.getValue(buffer.size - PacketFormat.CRC_BYTE_SIZE, PacketFormat.CRC_BYTE_SIZE).toByte()
                         val calculatedCrc =
                             CRCUtils.getCRC8(buffer, buffer.size - 1).toByte()
                         val status = if (crc != calculatedCrc) ERROR_CRC else buffer[1]
                         val data =
                             if (dataLength == 0) byteArrayOf()
                             else buffer.copyOfRange(
-                                PREFIX_LENGTH,
-                                PREFIX_LENGTH + dataLength
+                                PacketFormat.PREFIX_LENGTH,
+                                PacketFormat.PREFIX_LENGTH + dataLength
                             )
                         reset()
                         return Response(status.toInt(), data)
@@ -59,12 +55,11 @@ class ResponseReaderImpl : ResponseReader {
         return null
     }
 
-    //MSB first
-    private fun extractValue(offset : Int, length : Int) : Int {
+    //LSB first
+    private fun ByteArray.getValue(offset : Int, byteSize : Int) : Int {
         var res = 0
-        for (i in offset .. offset + length) {
-            res = res shl 8
-            res += buffer[i]
+        for (i in 0 until byteSize) {
+            res += ((this[i + offset].toInt() and 0xFF) shl 8*i)
         }
         return res
     }
@@ -75,7 +70,7 @@ class ResponseReaderImpl : ResponseReader {
         state = State.WAITING
         insertIndex = 0
         dataLength = 0
-        buffer = ByteArray(PREFIX_LENGTH)
+        buffer = ByteArray(PacketFormat.PREFIX_LENGTH)
     }
 
 

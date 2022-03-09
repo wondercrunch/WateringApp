@@ -2,37 +2,45 @@ package com.ilyapiskunov.wateringapp.model
 
 import com.ilyapiskunov.wateringapp.CRCUtils
 import java.io.ByteArrayOutputStream
+import java.nio.ByteBuffer
 
 class CommandPacket(commandCode : Int) {
-    private val DUMMY_BYTE = 0x81
     private val cmdStream : ByteArrayOutputStream = ByteArrayOutputStream()
     private val dataStream : ByteArrayOutputStream = ByteArrayOutputStream()
 
     init {
-        cmdStream.write(DUMMY_BYTE)
+        cmdStream.write(PacketFormat.TX_BUS_ADDRESS)
         cmdStream.write(commandCode)
     }
 
-    fun add(b : Int): CommandPacket {
-        dataStream.write(b)
+    fun put(byte : Int): CommandPacket {
+        dataStream.write(byte)
         return this
     }
 
-    fun add(bytes: ByteArray): CommandPacket {
+    fun put(bytes: ByteArray): CommandPacket {
         dataStream.write(bytes)
         return this
     }
 
+    //LSB first
+    private fun ByteArrayOutputStream.putValue(value : Int, byteSize : Int) {
+        for (i in 0 until byteSize)
+            this.write((value ushr 8*i) and 0xFF)
+    }
 
+    fun put(value : Int, byteSize : Int) {
+        dataStream.putValue(value, byteSize)
+    }
 
     fun toByteArray(): ByteArray {
         val dataLength = dataStream.size()
-        cmdStream.write(dataLength)
+        cmdStream.putValue(dataLength, PacketFormat.DATA_LENGTH_BYTE_SIZE)
         if (dataLength > 0) {
             cmdStream.write(dataStream.toByteArray())
         }
-        val crc8 = CRCUtils.getCRC8(cmdStream.toByteArray())
-        cmdStream.write(crc8)
+        val crc = PacketFormat.getCRC(cmdStream.toByteArray())
+        cmdStream.putValue(crc, PacketFormat.CRC_BYTE_SIZE)
         return cmdStream.toByteArray()
     }
 }
