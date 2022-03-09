@@ -33,13 +33,13 @@ class WateringDevice(val bluetoothDevice : BluetoothDevice, private val deviceLi
     private val commandLock = Mutex() //for sequential execution
     private val responseQueue : BlockingQueue<Response> = LinkedBlockingQueue()
     private val scope = CoroutineScope(Dispatchers.IO)
-    private val responseReader = ResponseReader(responseQueue)
+    private val responseReader : ResponseReader = ResponseReaderImpl()
     private val eventListener by lazy {
         ConnectionEventListener().apply {
             onRead = { device, payload ->
                 if (device == bluetoothDevice) {
                     try {
-                        responseReader.handle(payload)
+                        responseReader.read(payload)?.let { response -> responseQueue.put(response) }
                     } catch (e: Exception) {
                         responseReader.reset()
                         e.printStackTrace()
@@ -48,12 +48,13 @@ class WateringDevice(val bluetoothDevice : BluetoothDevice, private val deviceLi
             }
             onWrite = { device, value ->
                 if (device == bluetoothDevice) {
-
+                    //TODO add onWrite handling
                 }
             }
 
         }
     }
+
     val channels : List<Channel>
 
         init {
@@ -130,65 +131,66 @@ class WateringDevice(val bluetoothDevice : BluetoothDevice, private val deviceLi
             return getResponse().checkStatus()
         }
 
-        private fun runCommand(command: Command, callback: (() -> Unit)? = null) {
+        private fun runCommand(name: String, command: suspend (() -> Unit)) {
             scope.launch(Dispatchers.IO) {
                 commandLock.withLock {
                     try {
-                        Log.i("SprinklerDevice", "Running command: $command")
-                        deviceListener.onCommandStart.invoke(this@WateringDevice, command)
-                        when (command) {
-                            is LoadConfig -> with(command) {
-                                channels.forEach { channel -> packet.add(channel.toByteArray())}
-                            }
-
-                            is SetTime -> with(command) {
-                                val day = (time.get(Calendar.DAY_OF_WEEK) - 2).mod(7) //0..6
-                                var dayByte = 1 shl day
-                                if (time.get(Calendar.WEEK_OF_YEAR) % 2 != 0)
-                                    dayByte = dayByte or 0x80
-                                packet.add(dayByte)
-                                    .add(time.get(Calendar.HOUR_OF_DAY))
-                                    .add(time.get(Calendar.MINUTE))
-                                    .add(time.get(Calendar.SECOND))
-                                writeAndGetValidResponse(packet)
-                            }
-
-                            is ToggleChannel -> with(command) {
-                                packet.add(channel)
-                                writeAndGetValidResponse(packet)
-                            }
-
-                            is SetName -> with(command) {
-                                packet.add(name.toByteArray(Charset.forName("KOI8-R")))
-                                writeAndGetValidResponse(packet)
-                                this@WateringDevice.name = name
-                            }
-                            else ->
-                                return@launch
-                        }
-                        callback?.invoke()
-                        deviceListener.onCommandSuccess.invoke(this@WateringDevice, command)
+                        Log.i("SprinklerDevice", "Running command: $name")
+                        deviceListener.onCommandStart.invoke(this@WateringDevice, name)
+                        command.invoke()
+                        deviceListener.onCommandSuccess.invoke(this@WateringDevice, name)
                     } catch (e : Exception) {
-                        deviceListener.onCommandError.invoke(this@WateringDevice, command, e)
+                        deviceListener.onCommandError.invoke(this@WateringDevice, name, e)
                     }
                 }
             }
         }
 
         fun loadConfig(callback: (() -> Unit)? = null) {
-            runCommand(LoadConfig(), callback)
+            runCommand("Load Config") {
+                val packet = CommandPacket(CMD_LOAD_CONFIG)
+                channels.forEach { channel -> packet.add(channel.toByteArray())}
+                writeAndGetValidResponse(packet)
+                callback?.invoke()
+            }
         }
 
         fun setTime(time: Calendar, callback: (() -> Unit)? = null) {
-            runCommand(SetTime(time), callback)
+            runCommand("Set Time") {
+                val packet = CommandPacket(CMD_SET_TIME)
+                val day = (time.get(Calendar.DAY_OF_WEEK) - 2).mod(7) //0..6
+                var dayByte = 1 shl day
+                if (time.get(Calendar.WEEK_OF_YEAR) % 2 != 0)
+                    dayByte = dayByte or 0x80
+                packet.add(dayByte)
+                    .add(time.get(Calendar.HOUR_OF_DAY))
+                    .add(time.get(Calendar.MINUTE))
+                    .add(time.get(Calendar.SECOND))
+                writeAndGetValidResponse(packet)
+                callback?.invoke()
+            }
         }
 
         fun toggleChannel(on : Boolean, channel: Int, callback: (() -> Unit)? = null) {
-            runCommand(ToggleChannel(channel, on), callback)
+            runCommand("Toggle Channel") {
+                val packet = CommandPacket(if (on) CMD_RF_ON else CMD_RF_OFF)
+                packet.add(channel)
+                writeAndGetValidResponse(packet)
+                callback?.invoke()
+            }
         }
 
         fun setDeviceName(name : String, callback: (() -> Unit)? = null) {
-            runCommand(SetName(name), callback)
+            runCommand("Set Name") {
+                val packet = CommandPacket(CMD_SET_NAME)
+                packet.add(name.toByteArray(Charset.forName("KOI8-R")))
+                writeAndGetValidResponse(packet)
+                synchronized(this.name) {
+                    this.name = name
+                }
+                callback?.invoke()
+            }
+
         }
 
         fun disconnect() {
