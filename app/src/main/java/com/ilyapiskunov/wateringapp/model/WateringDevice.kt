@@ -194,8 +194,11 @@ class WateringDevice(val bluetoothDevice : BluetoothDevice, private val deviceLi
 
         fun setDeviceName(name : String, callback: (() -> Unit)? = null) {
             runCommand("Set Name") {
-                val packet = CommandPacket(CMD_SET_NAME)
                 val encodedName = name.toByteArray(PacketFormat.getCharset())
+                if (encodedName.size > PacketFormat.DEVICE_NAME_MAX_BYTE_SIZE)
+                    throw Exception("Длина имени не должна превышать ${PacketFormat.DEVICE_NAME_MAX_BYTE_SIZE} байт")
+
+                val packet = CommandPacket(CMD_SET_NAME)
                 packet.put(encodedName)
                     .put(ByteArray(PacketFormat.DEVICE_NAME_MAX_BYTE_SIZE - encodedName.size) { 0x20 }) //добить до 20 байт пробелами
                 writeAndGetValidResponse(packet)

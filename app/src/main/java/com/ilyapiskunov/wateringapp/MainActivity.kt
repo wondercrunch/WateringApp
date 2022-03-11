@@ -121,17 +121,11 @@ class MainActivity : AppCompatActivity() {
                         .setTitle("Введите новое имя")
                         .setView(input)
                         .setPositiveButton("ОК") { dialog, i ->
-                            val name = input.text.toString()
-                            if (name.toByteArray(PacketFormat.getCharset()).size > PacketFormat.DEVICE_NAME_MAX_BYTE_SIZE) {
-                                toast("Длина имени не должна быть больше ${PacketFormat.DEVICE_NAME_MAX_BYTE_SIZE} байт")
-                                dialog.cancel()
-                            }
-                            else
-                                device.setDeviceName(name) {
-                                    runOnUiThread {
-                                        menuCurrentDevice.title = device.name
-                                    }
+                            device.setDeviceName(input.text.toString()) {
+                                runOnUiThread {
+                                    menuCurrentDevice.title = device.name
                                 }
+                            }
                         }
                         .setNegativeButton("Отмена") { dialog, i ->
                             dialog.cancel()
