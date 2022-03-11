@@ -39,6 +39,7 @@ class WateringDevice(val bluetoothDevice : BluetoothDevice, private val deviceLi
     val mcuVersion : ByteArray
     val mcuId : ByteArray
 
+
     private val commandLock = Mutex() //for sequential execution
     private val responseQueue : BlockingQueue<Response> = LinkedBlockingQueue()
     private val scope = CoroutineScope(Dispatchers.IO)
@@ -70,10 +71,12 @@ class WateringDevice(val bluetoothDevice : BluetoothDevice, private val deviceLi
 
             ConnectionManager.registerListener(eventListener)
             write(CommandPacket(CMD_IDENTIFY))
-            val mcuInfoResponse = getResponse().checkStatus()
-            name = String(mcuInfoResponse.data, 0, 10, StandardCharsets.UTF_8)
-            mcuVersion = mcuInfoResponse.data.copyOfRange(10, 12)
-            mcuId = mcuInfoResponse.data.copyOfRange(12, 14)
+            val mcuInfoResponse = getResponse().checkStatus().checkData()
+
+            val nameSize = PacketFormat.DEVICE_NAME_MAX_BYTE_SIZE
+            name = String(mcuInfoResponse.data, 0, nameSize, PacketFormat.getCharset()).trim()
+            mcuVersion = mcuInfoResponse.data.copyOfRange(nameSize, nameSize+2)
+            mcuId = mcuInfoResponse.data.copyOfRange(nameSize+2, nameSize+4)
 
             write(CommandPacket(CMD_GET_STATE))
             val stateResponse = getResponse().checkStatus().checkData()
@@ -192,9 +195,9 @@ class WateringDevice(val bluetoothDevice : BluetoothDevice, private val deviceLi
         fun setDeviceName(name : String, callback: (() -> Unit)? = null) {
             runCommand("Set Name") {
                 val packet = CommandPacket(CMD_SET_NAME)
-                val encodedName = name.toByteArray(Charset.forName("KOI8-R"))
+                val encodedName = name.toByteArray(PacketFormat.getCharset())
                 packet.put(encodedName)
-                    .put(ByteArray(20 - encodedName.size) { 0x20 }) //добить до 20 байт пробелами
+                    .put(ByteArray(PacketFormat.DEVICE_NAME_MAX_BYTE_SIZE - encodedName.size) { 0x20 }) //добить до 20 байт пробелами
                 writeAndGetValidResponse(packet)
                 synchronized(this.name) {
                     this.name = name

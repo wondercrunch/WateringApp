@@ -22,10 +22,7 @@ import com.ilyapiskunov.wateringapp.ble.connection.ConnectionManager
 import com.ilyapiskunov.wateringapp.ble.search.DeviceListActivity
 import com.ilyapiskunov.wateringapp.journal.JournalActivity
 import com.ilyapiskunov.wateringapp.journal.JournalMessage
-import com.ilyapiskunov.wateringapp.model.DeviceEventListener
-import com.ilyapiskunov.wateringapp.model.Channel
-import com.ilyapiskunov.wateringapp.model.ChannelRecyclerAdapter
-import com.ilyapiskunov.wateringapp.model.WateringDevice
+import com.ilyapiskunov.wateringapp.model.*
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -124,11 +121,17 @@ class MainActivity : AppCompatActivity() {
                         .setTitle("Введите новое имя")
                         .setView(input)
                         .setPositiveButton("ОК") { dialog, i ->
-                            device.setDeviceName(input.text.toString()) {
-                                runOnUiThread {
-                                    menuCurrentDevice.title = device.name
-                                }
+                            val name = input.text.toString()
+                            if (name.toByteArray(PacketFormat.getCharset()).size > PacketFormat.DEVICE_NAME_MAX_BYTE_SIZE) {
+                                toast("Длина имени не должна быть больше ${PacketFormat.DEVICE_NAME_MAX_BYTE_SIZE} байт")
+                                dialog.cancel()
                             }
+                            else
+                                device.setDeviceName(name) {
+                                    runOnUiThread {
+                                        menuCurrentDevice.title = device.name
+                                    }
+                                }
                         }
                         .setNegativeButton("Отмена") { dialog, i ->
                             dialog.cancel()
