@@ -33,8 +33,8 @@ class ResponseReaderImpl : ResponseReader {
                     State.PREFIX_RECEIVED -> {
                         val crc = buffer.getValue(buffer.size - PacketFormat.CRC_BYTE_SIZE, PacketFormat.CRC_BYTE_SIZE).toByte()
                         val calculatedCrc =
-                            CRCUtils.getCRC8(buffer, buffer.size - 1).toByte()
-                        val status = if (crc != calculatedCrc) ERROR_CRC else buffer[1]
+                            PacketFormat.getCRC(buffer, buffer.size - 1).toByte()
+                        val status : Int = if (crc != calculatedCrc) ERROR_CRC else (buffer[PacketFormat.STATUS_OFFSET].toInt() and 0xFF)
                         val data =
                             if (dataLength == 0) byteArrayOf()
                             else buffer.copyOfRange(
@@ -42,12 +42,12 @@ class ResponseReaderImpl : ResponseReader {
                                 PacketFormat.PREFIX_LENGTH + dataLength
                             )
                         reset()
-                        return Response(status.toInt(), data)
+                        return Response(status, data)
 
                     }
 
                     State.DATA_RECEIVED -> {
-                        //calc crc?
+
                     }
                 }
             }

@@ -2,14 +2,7 @@ package com.ilyapiskunov.wateringapp.model
 
 import java.util.*
 
-const val CMD_READ_CONFIG = 0x86
-const val CMD_LOAD_CONFIG = 0x84
-const val CMD_IDENTIFY = 0x8A
-const val CMD_SET_NAME = 0x8B
-const val CMD_GET_STATE = 0x6E
-const val CMD_RF_ON = 0x68
-const val CMD_RF_OFF = 0x6A
-const val CMD_SET_TIME = 0x70
+
 
 sealed class Command(code : Int) {
     val packet = CommandPacket(code)

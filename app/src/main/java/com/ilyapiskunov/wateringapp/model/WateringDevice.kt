@@ -19,6 +19,15 @@ import java.util.concurrent.BlockingQueue
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit
 
+const val CMD_READ_CONFIG = 0x86
+const val CMD_LOAD_CONFIG = 0x84
+const val CMD_IDENTIFY = 0x8A
+const val CMD_SET_NAME = 0x8B
+const val CMD_GET_STATE = 0x6E
+const val CMD_RF_ON = 0x68
+const val CMD_RF_OFF = 0x6A
+const val CMD_SET_TIME = 0x70
+
 const val ERROR_CRC = 0x03
 
 //
@@ -183,7 +192,9 @@ class WateringDevice(val bluetoothDevice : BluetoothDevice, private val deviceLi
         fun setDeviceName(name : String, callback: (() -> Unit)? = null) {
             runCommand("Set Name") {
                 val packet = CommandPacket(CMD_SET_NAME)
-                packet.put(name.toByteArray(Charset.forName("KOI8-R")))
+                val encodedName = name.toByteArray(Charset.forName("KOI8-R"))
+                packet.put(encodedName)
+                    .put(ByteArray(20 - encodedName.size) { 0x20 }) //добить до 20 байт пробелами
                 writeAndGetValidResponse(packet)
                 synchronized(this.name) {
                     this.name = name

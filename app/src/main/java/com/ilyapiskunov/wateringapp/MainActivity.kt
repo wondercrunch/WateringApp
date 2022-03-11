@@ -313,7 +313,7 @@ class MainActivity : AppCompatActivity() {
             onDisconnect = {
                 bluetoothDevice ->
                 CoroutineScope(Dispatchers.IO).launch {
-                    journal("Потеряно соединение с ${bluetoothDevice.name}")
+                    journal("Потеряно соединение с ${bluetoothDevice.address}")
                     var disconnectedDevice: WateringDevice? = null
                     devices.forEach {
                         if (it.bluetoothDevice == bluetoothDevice) disconnectedDevice = it
