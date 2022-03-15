@@ -1,5 +1,6 @@
 package com.ilyapiskunov.wateringapp
 
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.AlertDialog
 import android.bluetooth.*
@@ -10,10 +11,12 @@ import android.text.InputType
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
+import android.view.View
 import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.core.content.ContextCompat
+import androidx.core.view.isVisible
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.ilyapiskunov.wateringapp.Tools.toHex
@@ -55,16 +58,25 @@ class MainActivity : AppCompatActivity() {
     private val devices : LinkedList<WateringDevice> = LinkedList()
     private lateinit var menuCurrentDevice: MenuItem
 
+    private var isBusy = false
+        set(value) {
+            field = value
+            runOnUiThread {
+                progressBar.visibility = if (value) View.VISIBLE else View.GONE
+            }
+        }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        //supportActionBar?.setDisplayShowTitleEnabled(false)
         Locale.setDefault(Locale("ru", "RU"))
         ConnectionManager.registerListener(connectionEventListener)
         ModelPreferencesManager.with(this)
         setContentView(R.layout.activity_main)
-        //Log.i(TAG, "Channels size: " + channels.size)
+
         list_channels.adapter = channelsAdapter
         list_channels.layoutManager = LinearLayoutManager(this)
-        //listChannels.setHasFixedSize(true)
+
         val separator = DividerItemDecoration(this, LinearLayout.VERTICAL)
         separator.setDrawable(ContextCompat.getDrawable(this, R.drawable.divider)!!)
         list_channels.addItemDecoration(separator)
@@ -90,8 +102,6 @@ class MainActivity : AppCompatActivity() {
         }
 
         journal("Старт")
-        //DEBUG
-        //channels.add(Channel(Array(7) {false}, Array(7) {false}, AlarmTime(0, 0, 0), AlarmTime(0, 0, 0)))
 
     }
 
@@ -112,20 +122,19 @@ class MainActivity : AppCompatActivity() {
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
+            /**
+             *  Rename current device
+             */
             R.id.menu_current_device -> {
                 currentDevice?.let { device ->
                     val input = EditText(this)
                     input.inputType = InputType.TYPE_CLASS_TEXT
-                    input.setText(device.name, TextView.BufferType.EDITABLE)
+                    input.setText(device.getName(), TextView.BufferType.EDITABLE)
                     AlertDialog.Builder(this)
                         .setTitle("Введите новое имя")
                         .setView(input)
                         .setPositiveButton("ОК") { dialog, i ->
-                            device.setDeviceName(input.text.toString()) {
-                                runOnUiThread {
-                                    menuCurrentDevice.title = device.name
-                                }
-                            }
+                            device.setName(input.text.toString())
                         }
                         .setNegativeButton("Отмена") { dialog, i ->
                             dialog.cancel()
@@ -133,11 +142,14 @@ class MainActivity : AppCompatActivity() {
                         .show()
                 } ?: alertDeviceNotConnected()
             }
+            /**
+             *  Show connected devices to choose from, if none open search activity
+             */
             R.id.menu_search -> {
                 if (devices.isNotEmpty()) {
                     AlertDialog.Builder(this)
                         .setTitle("Устройства")
-                        .setItems(devices.map { device -> device.name }
+                        .setItems(devices.map { device -> device.getName() }
                             .toTypedArray()) { _, index ->
                             val selected = devices[index]
                             if (currentDevice != selected)
@@ -154,6 +166,15 @@ class MainActivity : AppCompatActivity() {
                 } else startSearchActivity()
                 return true
             }
+            /**
+             *  Refresh device state
+             */
+            R.id.menu_get_state -> {
+                currentDevice?.getState() ?: alertDeviceNotConnected()
+            }
+            /**
+             *  Open journal
+             */
             R.id.menu_journal -> {
                 startJournalActivity()
             }
@@ -199,12 +220,13 @@ class MainActivity : AppCompatActivity() {
 
 
 
-
+    @SuppressLint("NotifyDataSetChanged")
     private fun onDeviceSelected(device: WateringDevice) {
         runOnUiThread {
+            btn_write.visibility = View.VISIBLE
             currentDevice = device
             channelsAdapter.setCurrentDevice(device)
-            menuCurrentDevice.title = device.name
+            menuCurrentDevice.title = device.getName()
             tv_voltage.text = getString(R.string.voltage_format, device.voltage)
             tv_water_level.text = getString(R.string.water_level_format, device.waterLevel)
             tv_version_id.text = getString(R.string.device_version_id_format, device.mcuVersion.toHex(""), device.mcuId.toHex(""))
@@ -216,8 +238,10 @@ class MainActivity : AppCompatActivity() {
 
     }
 
+    @SuppressLint("NotifyDataSetChanged")
     private fun onNoDeviceSelected() {
         runOnUiThread {
+            btn_write.visibility = View.GONE
             currentDevice = null
             channelsAdapter.setCurrentDevice(null)
             menuCurrentDevice.setTitle(R.string.menu_current_device)
@@ -259,18 +283,30 @@ class MainActivity : AppCompatActivity() {
         DeviceEventListener().apply {
 
             onCommandStart = { device, cmd ->
-                journal(device.name, "Команда $cmd")
+                journal(device.getName(), "Команда $cmd")
             }
 
             onCommandSuccess = { device, cmd ->
-                journal(device.name, "Команда $cmd выполнена")
-                runOnUiThread {
-                    toast("OK")
-                }
+                journal(device.getName(), "Команда $cmd выполнена")
+
+                if (currentDevice == device)
+                    runOnUiThread {
+                        when (cmd) {
+                            "Get State" -> {
+                                tv_voltage.text = getString(R.string.voltage_format, device.voltage)
+                                tv_water_level.text = getString(R.string.water_level_format, device.waterLevel)
+                            }
+
+                            "Set Name" -> {
+                                menuCurrentDevice.title = device.getName()
+                            }
+                        }
+                        toast("OK")
+                    }
             }
 
             onCommandError = { device, cmd, exception ->
-                journal(device.name, "Ошибка при выполнении команды $cmd - ${exception.message}")
+                journal(device.getName(), "Ошибка при выполнении команды $cmd - ${exception.message}")
                 exception.printStackTrace()
                 alertError(exception.message)
             }
@@ -293,8 +329,10 @@ class MainActivity : AppCompatActivity() {
                 bluetoothDevice ->
                 CoroutineScope(Dispatchers.IO).launch {
                     try {
+                        isBusy = true
                         journal("Установлено соединение с ${bluetoothDevice.address}")
                         val connectedDevice = WateringDevice(bluetoothDevice, deviceEventListener)
+                        connectedDevice.getState()
                         devices.add(connectedDevice)
                         onDeviceSelected(connectedDevice)
                         //toast("Установлено соединение с ${connectedDevice.name}")
@@ -303,6 +341,9 @@ class MainActivity : AppCompatActivity() {
                         e.printStackTrace()
                         alertError(e.message)
                         ConnectionManager.disconnect(bluetoothDevice)
+                    }
+                    finally {
+                        isBusy = false
                     }
                 }
 

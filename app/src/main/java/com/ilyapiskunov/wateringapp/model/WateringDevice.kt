@@ -2,6 +2,8 @@ package com.ilyapiskunov.wateringapp.model
 
 import android.bluetooth.BluetoothDevice
 import android.util.Log
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import com.ilyapiskunov.wateringapp.ble.connection.ConnectionEventListener
 import com.ilyapiskunov.wateringapp.ble.connection.ConnectionManager
 import com.ilyapiskunov.wateringapp.exception.TimeoutException
@@ -11,8 +13,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.io.ByteArrayInputStream
-import java.nio.charset.Charset
-import java.nio.charset.StandardCharsets
 import java.util.*
 
 import java.util.concurrent.BlockingQueue
@@ -33,9 +33,9 @@ const val ERROR_CRC = 0x03
 //
 const val DEFAULT_TIMEOUT = 1000L
 class WateringDevice(val bluetoothDevice : BluetoothDevice, private val deviceListener : DeviceEventListener) {
-    val waterLevel : Int
-    val voltage : Float
-    var name : String
+    var waterLevel : Int = 0
+    var voltage : Float = 0.0f
+    private var name : String
     val mcuVersion : ByteArray
     val mcuId : ByteArray
 
@@ -77,11 +77,6 @@ class WateringDevice(val bluetoothDevice : BluetoothDevice, private val deviceLi
             name = String(mcuInfoResponse.data, 0, nameSize, PacketFormat.getCharset()).trim()
             mcuVersion = mcuInfoResponse.data.copyOfRange(nameSize, nameSize+2)
             mcuId = mcuInfoResponse.data.copyOfRange(nameSize+2, nameSize+4)
-
-            write(CommandPacket(CMD_GET_STATE))
-            val stateResponse = getResponse().checkStatus().checkData()
-            voltage = calculateVoltage(stateResponse.data[0])
-            waterLevel = calculateWaterLevel(stateResponse.data[1])
 
             val readChannelsCount = CommandPacket(CMD_READ_CONFIG).put(1)
             write(readChannelsCount)
@@ -143,7 +138,7 @@ class WateringDevice(val bluetoothDevice : BluetoothDevice, private val deviceLi
             return getResponse().checkStatus()
         }
 
-        private fun runCommand(name: String, command: suspend (() -> Unit)) {
+        private fun runCommand(name: String, command: (() -> Unit)) {
             scope.launch(Dispatchers.IO) {
                 commandLock.withLock {
                     try {
@@ -158,16 +153,29 @@ class WateringDevice(val bluetoothDevice : BluetoothDevice, private val deviceLi
             }
         }
 
-        fun loadConfig(callback: (() -> Unit)? = null) {
+        fun getName() : String {
+            return name
+        }
+
+        fun getState() {
+            runCommand("Get State") {
+                write(CommandPacket(CMD_GET_STATE))
+                val stateResponse = getResponse().checkStatus().checkData()
+                voltage = calculateVoltage(stateResponse.data[0])
+                waterLevel = calculateWaterLevel(stateResponse.data[1])
+            }
+
+        }
+
+        fun loadConfig() {
             runCommand("Load Config") {
                 val packet = CommandPacket(CMD_LOAD_CONFIG)
                 channels.forEach { channel -> packet.put(channel.toByteArray())}
                 writeAndGetValidResponse(packet)
-                callback?.invoke()
             }
         }
 
-        fun setTime(time: Calendar, callback: (() -> Unit)? = null) {
+        fun setTime(time: Calendar) {
             runCommand("Set Time") {
                 val packet = CommandPacket(CMD_SET_TIME)
                 val day = (time.get(Calendar.DAY_OF_WEEK) - 2).mod(7) //0..6
@@ -179,20 +187,18 @@ class WateringDevice(val bluetoothDevice : BluetoothDevice, private val deviceLi
                     .put(time.get(Calendar.MINUTE))
                     .put(time.get(Calendar.SECOND))
                 writeAndGetValidResponse(packet)
-                callback?.invoke()
             }
         }
 
-        fun toggleChannel(on : Boolean, channel: Int, callback: (() -> Unit)? = null) {
+        fun toggleChannel(on : Boolean, channel: Int) {
             runCommand("Toggle Channel") {
                 val packet = CommandPacket(if (on) CMD_RF_ON else CMD_RF_OFF)
                 packet.put(channel)
                 writeAndGetValidResponse(packet)
-                callback?.invoke()
             }
         }
 
-        fun setDeviceName(name : String, callback: (() -> Unit)? = null) {
+        fun setName(name : String) {
             runCommand("Set Name") {
                 val encodedName = name.toByteArray(PacketFormat.getCharset())
                 if (encodedName.size > PacketFormat.DEVICE_NAME_MAX_BYTE_SIZE)
@@ -202,10 +208,7 @@ class WateringDevice(val bluetoothDevice : BluetoothDevice, private val deviceLi
                 packet.put(encodedName)
                     .put(ByteArray(PacketFormat.DEVICE_NAME_MAX_BYTE_SIZE - encodedName.size) { 0x20 }) //добить до 20 байт пробелами
                 writeAndGetValidResponse(packet)
-                synchronized(this.name) {
-                    this.name = name
-                }
-                callback?.invoke()
+                this.name = name
             }
 
         }
@@ -217,10 +220,6 @@ class WateringDevice(val bluetoothDevice : BluetoothDevice, private val deviceLi
         fun unregisterListener() {
             ConnectionManager.unregisterListener(eventListener)
         }
-
-
-
-
 
 }
 

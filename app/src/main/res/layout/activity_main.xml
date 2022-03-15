@@ -59,6 +59,20 @@
 		android:layout_marginStart="20dp"
 		android:layout_marginEnd="20dp"
 		android:text="@string/btnWrite"
+		android:visibility="gone"
 		/>
+
+	<ProgressBar
+		style="?android:attr/progressBarStyleLarge"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:id="@+id/progressBar"
+		android:progressDrawable="@drawable/progress_bar"
+		app:layout_constraintTop_toTopOf="parent"
+		app:layout_constraintBottom_toBottomOf="parent"
+		app:layout_constraintStart_toStartOf="parent"
+		app:layout_constraintEnd_toEndOf="parent"
+		android:visibility="gone"
+		android:layout_alignParentBottom="true" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

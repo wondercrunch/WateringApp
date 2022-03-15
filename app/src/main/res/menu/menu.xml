@@ -1,11 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
-
     <item
         android:id="@+id/menu_current_device"
         android:title="@string/menu_current_device"
-        app:showAsAction="ifRoom"
+        app:showAsAction="always"
+        />
+    <item
+        android:id="@+id/menu_get_state"
+        android:title="@string/menu_get_state"
+        app:showAsAction="always"
+        android:icon="@drawable/ic_get_state"
         />
     <item
         android:id="@+id/menu_search"

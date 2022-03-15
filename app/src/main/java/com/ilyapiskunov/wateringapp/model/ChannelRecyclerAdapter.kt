@@ -34,7 +34,7 @@ class ChannelRecyclerAdapter(private val channels : ArrayList<Channel>) : Recycl
     override fun getItemCount() = channels.size
 
     override fun onBindViewHolder(holder: ChannelViewHolder, position: Int) {
-        holder.tvChannelId.text = "Канал ".plus(position+1)
+        holder.tvChannelId.text = holder.itemView.context.getString(R.string.tv_channel_format, position+1)
         val channel : Channel = channels[position]
         if (isCurrentWeekEven) {
             holder.tvWeekEven.setTextColor(Color.GREEN)

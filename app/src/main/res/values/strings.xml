@@ -1,5 +1,5 @@
 <resources>
-	<string name="app_name">WateringApp</string>
+	<string name="app_name">Полив</string>
     <string name="add_channel">Добавить канал</string>
     <string name="refresh">Обновить</string>
     <string name="device_status">статус</string>
@@ -10,11 +10,21 @@
     <string name="menu_device_list">Поиск устройств</string>
     <string name="default_device_address">19:09:30:10:0B:D1</string>
     <string name="delete_channel">Удалить</string>
-    <string name="menu_current_device">…</string>
+    <string name="menu_current_device">Нет устройств</string>
     <string name="btnWrite">Записать</string>
     <string name="voltage_format">Напряжение: %1$.2fВ</string>
     <string name="water_level_format">Уровень воды: %1$d%%</string>
     <string name="device_version_id_format">Версия: %1$s ID: %2$s</string>
     <string name="menu_journal">Журнал</string>
     <string name="menu_search">Поиск устройств</string>
+    <string name="tv_channel_format">Канал %1$d</string>
+    <string name="btn_open_channel">Открыть</string>
+    <string name="btn_close_channel">Закрыть</string>
+    <string name="tv_week_odd">Нечёт</string>
+    <string name="tv_week_even">Чёт</string>
+    <string name="tv_timer_on">ВКЛ</string>
+    <string name="tv_timer_off">ВЫКЛ</string>
+    <string name="btn_skip_day">Через день</string>
+    <string name="btn_every_day">Каждый день</string>
+    <string name="menu_get_state">Обновить статус</string>
 </resources>
