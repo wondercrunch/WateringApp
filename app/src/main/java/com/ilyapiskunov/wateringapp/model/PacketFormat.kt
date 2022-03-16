@@ -16,12 +16,17 @@ object PacketFormat {
 
     const val DEVICE_NAME_MAX_BYTE_SIZE = 20
 
+    private const val DEVICE_CHARSET = "KOI8-R"
+
+
+
+
     fun getCRC(bytes : ByteArray, length : Int = bytes.size) : Int {
         return CRCUtils.getCRC8(bytes, length)
     }
 
     fun getCharset() : Charset {
-        return Charset.forName("KOI8-R")
+        return Charset.forName(DEVICE_CHARSET)
     }
 
 }

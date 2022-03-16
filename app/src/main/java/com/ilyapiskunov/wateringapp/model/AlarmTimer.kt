@@ -1,7 +1,7 @@
 package com.ilyapiskunov.wateringapp.model
 
 
-data class AlarmTime(var hours : Int, var minutes: Int, var seconds : Int) {
+data class AlarmTimer(var hours : Int, var minutes: Int, var seconds : Int) {
 
     enum class TimeField {
         HOURS,

@@ -12,13 +12,13 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="32dp"
         android:text="@string/tv_channel_format"
-        app:layout_constraintBottom_toBottomOf="@+id/btnOpen"
+        app:layout_constraintBottom_toBottomOf="@+id/btn_open"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/btnOpen"
+        app:layout_constraintTop_toTopOf="@+id/btn_open"
         app:layout_constraintVertical_bias="0.517" />
 
     <Button
-        android:id="@+id/btnOpen"
+        android:id="@+id/btn_open"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="28dp"
@@ -28,19 +28,19 @@
         app:layout_constraintTop_toTopOf="parent" />
 
     <Button
-        android:id="@+id/btnClose"
+        android:id="@+id/btn_close"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/btn_close_channel"
-        app:layout_constraintBottom_toBottomOf="@+id/btnOpen"
+        app:layout_constraintBottom_toBottomOf="@+id/btn_open"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.491"
-        app:layout_constraintStart_toEndOf="@+id/btnOpen"
-        app:layout_constraintTop_toTopOf="@+id/btnOpen"
+        app:layout_constraintStart_toEndOf="@+id/btn_open"
+        app:layout_constraintTop_toTopOf="@+id/btn_open"
         app:layout_constraintVertical_bias="1.0" />
 
     <TextView
-        android:id="@+id/tvWeekOdd"
+        android:id="@+id/tv_week_odd"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/tv_week_odd"
@@ -49,12 +49,12 @@
         app:layout_constraintTop_toTopOf="@+id/days_of_week_1" />
 
     <TextView
-        android:id="@+id/tvWeekEven"
+        android:id="@+id/tv_week_even"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/tv_week_even"
         app:layout_constraintBottom_toBottomOf="@+id/days_of_week_2"
-        app:layout_constraintEnd_toEndOf="@+id/tvWeekOdd"
+        app:layout_constraintEnd_toEndOf="@+id/tv_week_odd"
         app:layout_constraintTop_toTopOf="@+id/days_of_week_2" />
 
     <include
@@ -63,8 +63,8 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/tvWeekOdd"
-        app:layout_constraintTop_toBottomOf="@+id/btnSkipDay" />
+        app:layout_constraintStart_toEndOf="@+id/tv_week_odd"
+        app:layout_constraintTop_toBottomOf="@+id/btn_skip_day" />
 
     <include
         android:id="@+id/days_of_week_2"
@@ -74,7 +74,7 @@
         android:layout_marginTop="4dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
-        app:layout_constraintStart_toEndOf="@+id/tvWeekEven"
+        app:layout_constraintStart_toEndOf="@+id/tv_week_even"
         app:layout_constraintTop_toBottomOf="@+id/days_of_week_1" />
 
     <include
@@ -83,7 +83,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="28dp"
-        app:layout_constraintStart_toEndOf="@+id/tvTimeOn"
+        app:layout_constraintStart_toEndOf="@+id/tv_timer_on"
         app:layout_constraintTop_toBottomOf="@+id/days_of_week_2" />
 
     <include
@@ -95,7 +95,7 @@
         app:layout_constraintTop_toBottomOf="@+id/time_on" />
 
     <TextView
-        android:id="@+id/tvTimeOn"
+        android:id="@+id/tv_timer_on"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/tv_timer_on"
@@ -104,7 +104,7 @@
         app:layout_constraintTop_toTopOf="@+id/time_on" />
 
     <TextView
-        android:id="@+id/tvTimeOff"
+        android:id="@+id/tv_timer_off"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/tv_timer_off"
@@ -113,7 +113,7 @@
         app:layout_constraintTop_toBottomOf="@+id/time_on" />
 
     <Button
-        android:id="@+id/btnSkipDay"
+        android:id="@+id/btn_skip_day"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:padding="5dp"
@@ -122,12 +122,12 @@
         android:text="@string/btn_skip_day"
         android:textSize="11sp"
         style="@style/Widget.AppCompat.Button.Borderless"
-        app:layout_constraintEnd_toStartOf="@id/btnEveryDay"
-        app:layout_constraintTop_toBottomOf="@+id/btnOpen"
+        app:layout_constraintEnd_toStartOf="@id/btn_every_day"
+        app:layout_constraintTop_toBottomOf="@+id/btn_open"
         />
 
     <Button
-        android:id="@+id/btnEveryDay"
+        android:id="@+id/btn_every_day"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:padding="5dp"
@@ -136,7 +136,7 @@
         android:textSize="11sp"
         style="@style/Widget.AppCompat.Button.Borderless"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="@id/btnSkipDay"
+        app:layout_constraintTop_toTopOf="@id/btn_skip_day"
         />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

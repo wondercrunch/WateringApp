@@ -5,7 +5,7 @@ import com.ilyapiskunov.wateringapp.CRCUtils
 import java.io.ByteArrayInputStream
 
 class ResponseReaderImpl : ResponseReader {
-
+    private val ERROR_CRC = 0x03
     private enum class State {
         WAITING,
         PREFIX_RECEIVED,

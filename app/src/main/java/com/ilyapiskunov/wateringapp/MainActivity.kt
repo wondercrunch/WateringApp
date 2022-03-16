@@ -227,8 +227,8 @@ class MainActivity : AppCompatActivity() {
             currentDevice = device
             channelsAdapter.setCurrentDevice(device)
             menuCurrentDevice.title = device.getName()
-            tv_voltage.text = getString(R.string.voltage_format, device.voltage)
-            tv_water_level.text = getString(R.string.water_level_format, device.waterLevel)
+            tv_voltage.text = getString(R.string.voltage_format, device.getVoltage())
+            tv_water_level.text = getString(R.string.water_level_format, device.getWaterLevel())
             tv_version_id.text = getString(R.string.device_version_id_format, device.mcuVersion.toHex(""), device.mcuId.toHex(""))
             channels.clear()
             channels.addAll(device.channels)
@@ -283,21 +283,21 @@ class MainActivity : AppCompatActivity() {
         DeviceEventListener().apply {
 
             onCommandStart = { device, cmd ->
-                journal(device.getName(), "Команда $cmd")
+                journal(device.getName(), "Команда ${cmd.name}")
             }
 
             onCommandSuccess = { device, cmd ->
-                journal(device.getName(), "Команда $cmd выполнена")
+                journal(device.getName(), "Команда ${cmd.name} выполнена")
 
                 if (currentDevice == device)
                     runOnUiThread {
                         when (cmd) {
-                            "Get State" -> {
-                                tv_voltage.text = getString(R.string.voltage_format, device.voltage)
-                                tv_water_level.text = getString(R.string.water_level_format, device.waterLevel)
+                            WateringDevice.Command.GET_STATE -> {
+                                tv_voltage.text = getString(R.string.voltage_format, device.getVoltage())
+                                tv_water_level.text = getString(R.string.water_level_format, device.getWaterLevel())
                             }
 
-                            "Set Name" -> {
+                            WateringDevice.Command.SET_NAME -> {
                                 menuCurrentDevice.title = device.getName()
                             }
                         }
@@ -306,7 +306,7 @@ class MainActivity : AppCompatActivity() {
             }
 
             onCommandError = { device, cmd, exception ->
-                journal(device.getName(), "Ошибка при выполнении команды $cmd - ${exception.message}")
+                journal(device.getName(), "Ошибка при выполнении команды ${cmd.name} - ${exception.message}")
                 exception.printStackTrace()
                 alertError(exception.message)
             }
