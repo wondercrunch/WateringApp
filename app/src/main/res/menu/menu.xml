@@ -23,4 +23,8 @@
         android:title="@string/menu_journal"
         app:showAsAction="never"
         />
+    <item android:id="@+id/menu_device_info"
+        android:title="@string/menu_device_info"
+        app:showAsAction="never"
+        />
 </menu>

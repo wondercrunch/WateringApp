@@ -19,11 +19,19 @@ import com.ilyapiskunov.wateringapp.R
 import kotlinx.android.synthetic.main.device_list_layout.*
 import org.jetbrains.anko.alert
 import org.jetbrains.anko.toast
+import java.util.*
+import kotlin.collections.ArrayList
 
 
 class DeviceListActivity : Activity() {
 
     private val REQUEST_GET_PERMISSION = 3
+
+    private val defaultDeviceAddress = {
+        val properties = Properties()
+        properties.load(baseContext.assets.open("app.properties"))
+        properties.getProperty("device.address")
+    }
 
     lateinit var bluetoothAdapter: BluetoothAdapter
     lateinit var bleScanner : BluetoothLeScanner
@@ -61,12 +69,7 @@ class DeviceListActivity : Activity() {
         list_devices.layoutManager = LinearLayoutManager(this)
 
         devicesAdapter.onItemClick = { bluetoothDevice ->
-            if (isScanning) stopBleScan()
-            intent = Intent()
-            intent.putExtra(MainActivity.EXTRA_ADDRESS, bluetoothDevice.address)
-
-            setResult(RESULT_OK, intent)
-            finish()
+            connect(bluetoothDevice)
         }
 
         bluetoothAdapter = BluetoothAdapter.getDefaultAdapter()
@@ -79,6 +82,15 @@ class DeviceListActivity : Activity() {
         }
 
 
+    }
+
+    private fun connect(bluetoothDevice: BluetoothDevice) {
+        if (isScanning) stopBleScan()
+        intent = Intent()
+        intent.putExtra(MainActivity.EXTRA_ADDRESS, bluetoothDevice.address)
+
+        setResult(RESULT_OK, intent)
+        finish()
     }
 
     override fun onStart() {
@@ -158,8 +170,12 @@ class DeviceListActivity : Activity() {
         override fun onScanResult(callbackType: Int, result: ScanResult?) {
             val device = result!!.device
             if (!device.address.isNullOrBlank() && !devices.contains(device)) {
-                devices.add(device)
-                devicesAdapter.notifyItemInserted(devices.size-1)
+                if (device.address.equals(defaultDeviceAddress))
+                    connect(device)
+                else {
+                    devices.add(device)
+                    devicesAdapter.notifyItemInserted(devices.size - 1)
+                }
             }
         }
 

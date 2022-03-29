@@ -1,11 +1,12 @@
 package com.ilyapiskunov.wateringapp.model
 
 import com.ilyapiskunov.wateringapp.CRCUtils
+import com.ilyapiskunov.wateringapp.exception.DeviceException
+import com.ilyapiskunov.wateringapp.exception.ERROR_CRC
 
 import java.io.ByteArrayInputStream
 
 class ResponseReaderImpl : ResponseReader {
-    private val ERROR_CRC = 0x03
     private enum class State {
         WAITING,
         PREFIX_RECEIVED,
@@ -55,12 +56,16 @@ class ResponseReaderImpl : ResponseReader {
         return null
     }
 
-    //LSB first
+    //MSB first
     private fun ByteArray.getValue(offset : Int, byteSize : Int) : Int {
+
+        val stream = ByteArrayInputStream(this, offset, byteSize)
+
         var res = 0
-        for (i in 0 until byteSize) {
-            res += ((this[i + offset].toInt() and 0xFF) shl 8*i)
-        }
+
+        for (i in byteSize-1 downTo 0)
+                res += (stream.read() shl 8*i) and 0xFF
+
         return res
     }
 

@@ -88,21 +88,19 @@ class MainActivity : AppCompatActivity() {
             return
         }
 
-        if (!bluetoothAdapter!!.isEnabled) {
-            val enableBluetoothIntent = Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
-            startActivityForResult(enableBluetoothIntent, REQUEST_ENABLE_BT)
-        }
+
 
         btn_write.setOnClickListener {
-            currentDevice?.let {
-                device ->
-                device.loadConfig()
-                device.setTime(GregorianCalendar.getInstance())
-            } ?: alertDeviceNotConnected()
+            currentDevice?.loadConfig() ?: alertDeviceNotConnected()
         }
 
         journal("Старт")
 
+        if (!bluetoothAdapter!!.isEnabled) {
+            val enableBluetoothIntent = Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
+            startActivityForResult(enableBluetoothIntent, REQUEST_ENABLE_BT)
+        }
+        else startSearchActivity()
     }
 
     override fun onDestroy() {
@@ -178,6 +176,19 @@ class MainActivity : AppCompatActivity() {
             R.id.menu_journal -> {
                 startJournalActivity()
             }
+            /**
+             * Show device info
+             */
+            R.id.menu_device_info -> {
+                currentDevice?.let {
+                    AlertDialog.Builder(this)
+                        .setMessage(getString(R.string.device_version_id_format, it.mcuVersion.toHex(""), it.mcuId))
+                        .setPositiveButton("OK") { dialog, i ->
+                            dialog.cancel()
+                        }
+                        .show()
+                } ?: alertDeviceNotConnected()
+            }
         }
         return super.onOptionsItemSelected(item)
     }
@@ -199,6 +210,7 @@ class MainActivity : AppCompatActivity() {
             REQUEST_ENABLE_BT -> {
                 if (resultCode == Activity.RESULT_OK) {
                     Log.i(TAG, "Bluetooth has been enabled")
+                    startSearchActivity()
                 } else {
                     finish()
                 }
@@ -229,7 +241,6 @@ class MainActivity : AppCompatActivity() {
             menuCurrentDevice.title = device.getName()
             tv_voltage.text = getString(R.string.voltage_format, device.getVoltage())
             tv_water_level.text = getString(R.string.water_level_format, device.getWaterLevel())
-            tv_version_id.text = getString(R.string.device_version_id_format, device.mcuVersion.toHex(""), device.mcuId.toHex(""))
             channels.clear()
             channels.addAll(device.channels)
             channelsAdapter.notifyDataSetChanged()
@@ -247,7 +258,6 @@ class MainActivity : AppCompatActivity() {
             menuCurrentDevice.setTitle(R.string.menu_current_device)
             tv_voltage.text = ""
             tv_water_level.text = ""
-            tv_version_id.text = ""
             channels.clear()
             channelsAdapter.notifyDataSetChanged()
         }
@@ -310,18 +320,27 @@ class MainActivity : AppCompatActivity() {
                 exception.printStackTrace()
                 alertError(exception.message)
             }
+
+            onRead = {
+                    device, bytes ->
+                journal(device.getName(), "RX: " + bytes.toHex(" "))
+
+            }
+
+            onWrite = {
+                    device, bytes ->
+                journal(device.getName(), "TX: " + bytes.toHex(" "))
+            }
         }
     }
 
 
 
-    private fun journal(message: String) {
-        journal("Система", message)
-    }
+    private fun journal(message: String) = journal("Система", message)
 
-    private fun journal(header: String, message: String) {
-        messages.add(JournalMessage(header, message))
-    }
+
+    private fun journal(header: String, message: String) = synchronized(messages) { messages.add(JournalMessage(header, message)) }
+
 
     private val connectionEventListener by lazy {
         ConnectionEventListener().apply {
@@ -333,6 +352,7 @@ class MainActivity : AppCompatActivity() {
                         journal("Установлено соединение с ${bluetoothDevice.address}")
                         val connectedDevice = WateringDevice(bluetoothDevice, deviceEventListener)
                         connectedDevice.getState()
+                        connectedDevice.setTime(GregorianCalendar.getInstance())
                         devices.add(connectedDevice)
                         onDeviceSelected(connectedDevice)
                         //toast("Установлено соединение с ${connectedDevice.name}")
@@ -356,9 +376,9 @@ class MainActivity : AppCompatActivity() {
                     devices.forEach {
                         if (it.bluetoothDevice == bluetoothDevice) disconnectedDevice = it
                     }
-                    if (disconnectedDevice != null) {
-                        devices.remove(disconnectedDevice!!)
-                        disconnectedDevice!!.unregisterListener()
+                    disconnectedDevice?.let {
+                        devices.remove(it)
+                        it.unregisterListener()
                         //toast("Потеряно соединение с ${disconnectedDevice!!.name}")
                         if (devices.isEmpty()) {
                             alertDeviceNotConnected()
@@ -366,21 +386,10 @@ class MainActivity : AppCompatActivity() {
                         } else {
                             onDeviceSelected(devices[0])
                         }
-
                     }
                 }
             }
-            onRead = {
-                bluetoothDevice, bytes ->
-                runOnUiThread {
-                    journal("RX", bytes.toHex(" "))
-                }
-            }
 
-            onWrite = {
-                bluetoothDevice, bytes ->
-                journal("TX", bytes.toHex(" "))
-            }
         }
     }
 }

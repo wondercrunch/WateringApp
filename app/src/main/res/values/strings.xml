@@ -14,7 +14,7 @@
     <string name="btnWrite">Записать</string>
     <string name="voltage_format">Напряжение: %1$.2fВ</string>
     <string name="water_level_format">Уровень воды: %1$d%%</string>
-    <string name="device_version_id_format">Версия: %1$s ID: %2$s</string>
+    <string name="device_version_id_format">Версия: %1$s ID: %2$d</string>
     <string name="menu_journal">Журнал</string>
     <string name="menu_search">Поиск устройств</string>
     <string name="tv_channel_format">Канал %1$d</string>
@@ -27,4 +27,5 @@
     <string name="btn_skip_day">Через день</string>
     <string name="btn_every_day">Каждый день</string>
     <string name="menu_get_state">Обновить статус</string>
+    <string name="menu_device_info">Об устройстве</string>
 </resources>
