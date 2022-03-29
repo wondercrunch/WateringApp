@@ -7,11 +7,14 @@ import com.ilyapiskunov.wateringapp.ble.connection.ConnectionManager
 import com.ilyapiskunov.wateringapp.exception.TimeoutException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
 import java.util.*
 
 import java.util.concurrent.BlockingQueue
@@ -19,14 +22,13 @@ import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit
 
 
-//
-const val DEFAULT_TIMEOUT = 1000L
 class WateringDevice(val bluetoothDevice : BluetoothDevice, private val deviceListener : DeviceEventListener) {
     private var waterLevel : Int = 0
     private var voltage : Double = 0.0
     private var name : String
     val mcuVersion : ByteArray
-    val mcuId : ByteArray
+    val mcuId : Int
+
 
 
     enum class Command(val code : Int) {
@@ -48,6 +50,7 @@ class WateringDevice(val bluetoothDevice : BluetoothDevice, private val deviceLi
         ConnectionEventListener().apply {
             onRead = { device, payload ->
                 if (device == bluetoothDevice) {
+                    deviceListener.onRead.invoke(this@WateringDevice, payload)
                     try {
                         responseReader.read(payload)?.let { response -> responseQueue.put(response) }
                     } catch (e: Exception) {
@@ -56,9 +59,9 @@ class WateringDevice(val bluetoothDevice : BluetoothDevice, private val deviceLi
                     }
                 }
             }
-            onWrite = { device, value ->
+            onWrite = { device, payload ->
                 if (device == bluetoothDevice) {
-                    //TODO add onWrite handling
+                    deviceListener.onWrite.invoke(this@WateringDevice, payload)
                 }
             }
 
@@ -76,19 +79,25 @@ class WateringDevice(val bluetoothDevice : BluetoothDevice, private val deviceLi
 
         val nameSize = PacketFormat.DEVICE_NAME_MAX_BYTE_SIZE
         name = String(mcuInfoResponse.data, 0, nameSize, PacketFormat.getCharset()).trim()
-        mcuVersion = mcuInfoResponse.data.copyOfRange(nameSize, nameSize+2)
-        mcuId = mcuInfoResponse.data.copyOfRange(nameSize+2, nameSize+4)
 
+        //2 byte array
+        mcuVersion = mcuInfoResponse.data.copyOfRange(nameSize, nameSize+2)
+
+        //4 byte integer
+        mcuId = ByteBuffer.wrap(mcuInfoResponse.data, nameSize+2, 4).order(ByteOrder.BIG_ENDIAN).getInt()
+
+        //get channels count
         CommandPacket(Command.READ_CONFIG.code)
-            .put(1) //channels count
+            .put(1) //read 1 byte - channels count
             .send()
         val countResponse = getResponse().checkStatus().checkData()
         val channelsCount = countResponse.data[0].toInt()
         if (channelsCount == 0) channels = emptyList()
         else {
 
+            //get channels
             CommandPacket(Command.READ_CONFIG.code)
-                .put(1 + channelsCount * 8)
+                .put(1 + channelsCount * 8) //channel size (8 bytes) * channels count 
                 .send()
             val channelsResponse = getResponse().checkStatus().checkData()
             val channelStream = ByteArrayInputStream(channelsResponse.data)
@@ -127,6 +136,7 @@ class WateringDevice(val bluetoothDevice : BluetoothDevice, private val deviceLi
                 } catch (e : Exception) {
                     deviceListener.onCommandError.invoke(this@WateringDevice, command, e)
                 }
+                delay(10)
             }
         }
     }
@@ -235,9 +245,9 @@ class WateringDevice(val bluetoothDevice : BluetoothDevice, private val deviceLi
         }
 
 
-        //LSB first
+        //MSB first
         private fun ByteArrayOutputStream.putValue(value : Int, byteSize : Int) {
-            for (i in 0 until byteSize)
+            for (i in byteSize-1 downTo 0)
                 this.write((value ushr 8*i) and 0xFF)
         }
 
@@ -260,33 +270,40 @@ class WateringDevice(val bluetoothDevice : BluetoothDevice, private val deviceLi
             return cmdStream.toByteArray()
         }
     }
-}
 
+    companion object WateringDeviceUtils {
 
-private fun readWeek(stream : ByteArrayInputStream) : Array<Boolean> {
-    val weekByte = stream.read()
-    return Array(7) {
-                i -> weekByte and (1 shl i) != 0
+        const val DEFAULT_TIMEOUT = 1000L
+
+        private fun readWeek(stream : ByteArrayInputStream) : Array<Boolean> {
+            val weekByte = stream.read()
+            return Array(7) {
+                    i -> weekByte and (1 shl i) != 0
             }
-}
+        }
 
-private fun readTime(stream : ByteArrayInputStream) : AlarmTimer {
-    val hours = stream.read()
-    val minutes = stream.read()
-    val seconds = stream.read()
-    return AlarmTimer(hours, minutes, seconds)
-}
+        private fun readTime(stream : ByteArrayInputStream) : AlarmTimer {
+            val hours = stream.read()
+            val minutes = stream.read()
+            val seconds = stream.read()
+            return AlarmTimer(hours, minutes, seconds)
+        }
 
-private fun calculateWaterLevel(raw : Byte) : Int {
-    return when {
-        raw < 17 -> 40
-        raw < 55 -> 30
-        raw < 92 -> 20
-        raw < 132 -> 10
-        else -> 0
+        private fun calculateWaterLevel(raw : Byte) : Int {
+            return when {
+                raw < 17 -> 40
+                raw < 55 -> 30
+                raw < 92 -> 20
+                raw < 132 -> 10
+                else -> 0
+            }
+        }
+
+        private fun calculateVoltage(raw : Byte) : Double {
+            return raw.toUByte().toDouble() * 0.02664
+        }
     }
+
 }
 
-private fun calculateVoltage(raw : Byte) : Double {
-    return raw.toUByte().toDouble() * 0.02664
-}
+
