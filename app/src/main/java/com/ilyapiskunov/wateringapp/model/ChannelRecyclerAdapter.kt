@@ -1,29 +1,28 @@
 package com.ilyapiskunov.wateringapp.model
 
+import android.content.Context
 import android.graphics.Color
 import android.os.Handler
 import android.os.Looper
 import android.text.Editable
 import android.text.InputFilter
 import android.text.TextWatcher
-import android.util.Log
-import android.view.LayoutInflater
-import android.view.MotionEvent
-import android.view.View
-import android.view.ViewGroup
+import android.view.*
 import android.widget.*
 import androidx.core.view.get
+import androidx.core.widget.addTextChangedListener
 import androidx.recyclerview.widget.RecyclerView
 import com.ilyapiskunov.wateringapp.R
 import kotlinx.android.synthetic.main.channel.view.*
 import kotlinx.android.synthetic.main.time.view.*
 import java.util.*
 
-class ChannelRecyclerAdapter(private val channels : List<Channel>) : RecyclerView.Adapter<ChannelRecyclerAdapter.ChannelViewHolder>() {
+class ChannelRecyclerAdapter(val context : Context, private val channels : List<Channel>) : RecyclerView.Adapter<ChannelRecyclerAdapter.ChannelViewHolder>() {
 
     private var currentDevice : WateringDevice? = null
     private val isCurrentWeekEven
         get() = Calendar.getInstance().get(Calendar.WEEK_OF_YEAR) % 2 == 0
+
 
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ChannelViewHolder {
@@ -34,80 +33,141 @@ class ChannelRecyclerAdapter(private val channels : List<Channel>) : RecyclerVie
     override fun getItemCount() = channels.size
 
     override fun onBindViewHolder(holder: ChannelViewHolder, position: Int) {
-        holder.tvChannelId.text = holder.itemView.context.getString(R.string.tv_channel_format, position+1)
-        val channel : Channel = channels[position]
-        if (isCurrentWeekEven) {
-            holder.tvWeekEven.setTextColor(Color.GREEN)
-        } else {
-            holder.tvWeekOdd.setTextColor(Color.GREEN)
-        }
-        for (i in 0..6) {
-            val dayOfWeek1 : ToggleButton = holder.daysOfWeek1[i] as ToggleButton
-            dayOfWeek1.isChecked = channel.week1[i]
-            dayOfWeek1.setOnClickListener {
-                channel.week1[i] = !channel.week1[i]
-                dayOfWeek1.isChecked = channel.week1[i]
+        with (holder) {
+            tvChannelId.text =
+                itemView.context.getString(R.string.tv_channel_format, position + 1)
+            val channel: Channel = channels[position]
+            if (isCurrentWeekEven) {
+                tvWeekEven.setTextColor(Color.GREEN)
+            } else {
+                tvWeekOdd.setTextColor(Color.GREEN)
             }
-
-            val dayOfWeek2 = holder.daysOfWeek2[i] as ToggleButton
-            dayOfWeek2.isChecked = channel.week2[i]
-            dayOfWeek2.setOnClickListener {
-                channel.week2[i] = !channel.week2[i]
-                dayOfWeek2.isChecked = channel.week2[i]
-            }
-        }
-
-        holder.btnEveryDay.setOnClickListener {
-            channel.week1.fill(true)
-            channel.week2.fill(true)
-            notifyItemChanged(position)
-        }
-
-        holder.btnSkipDay.setOnClickListener {
             for (i in 0..6) {
-                val isEven = i % 2 == 0
-                channel.week1[i] = isEven
-                channel.week2[i] = !isEven
+                val dayOfWeek1: ToggleButton = daysOfWeek1[i] as ToggleButton
+                dayOfWeek1.isChecked = channel.week1[i]
+                dayOfWeek1.setOnClickListener {
+                    channel.week1[i] = !channel.week1[i]
+                    dayOfWeek1.isChecked = channel.week1[i]
+                }
+
+                val dayOfWeek2 = daysOfWeek2[i] as ToggleButton
+                dayOfWeek2.isChecked = channel.week2[i]
+                dayOfWeek2.setOnClickListener {
+                    channel.week2[i] = !channel.week2[i]
+                    dayOfWeek2.isChecked = channel.week2[i]
+                }
             }
-            notifyItemChanged(position)
-        }
+
+            btnEveryDay.setOnClickListener {
+                channel.week1.fill(true)
+                channel.week2.fill(true)
+                notifyItemChanged(position)
+            }
+
+            btnSkipDay.setOnClickListener {
+                for (i in 0..6) {
+                    val isEven = i % 2 == 0
+                    channel.week1[i] = isEven
+                    channel.week2[i] = !isEven
+                }
+                notifyItemChanged(position)
+            }
 
 
-        val timerOn : AlarmTimer = channel.timerOn
 
-        holder.timerOn.editHrs.setText(timerOn.toString(AlarmTimer.TimeField.HOURS))
-        holder.timerOn.editMin.setText(timerOn.toString(AlarmTimer.TimeField.MINUTES))
-        holder.timerOn.editSec.setText(timerOn.toString(AlarmTimer.TimeField.SECONDS))
 
-        val timerOff : AlarmTimer = channel.timerOff
-        holder.timerOff.editHrs.setText(timerOff.toString(AlarmTimer.TimeField.HOURS))
-        holder.timerOff.editMin.setText(timerOff.toString(AlarmTimer.TimeField.MINUTES))
-        holder.timerOff.editSec.setText(timerOff.toString(AlarmTimer.TimeField.SECONDS))
-        
-        val holderTimerOn = holder.timerOn
-        val holderTimerOff = holder.timerOff
-        setTimeControlButtonListener(holderTimerOn.btnIncHrs, holderTimerOn.editHrs, position) {timerOn.incHours() }
-        setTimeControlButtonListener(holderTimerOn.btnIncMin, holderTimerOn.editMin, position) {timerOn.incMinutes()}
-        setTimeControlButtonListener(holderTimerOn.btnIncSec, holderTimerOn.editSec, position) {timerOn.incSeconds()}
-        setTimeControlButtonListener(holderTimerOn.btnDecHrs, holderTimerOn.editHrs, position) {timerOn.decHours()}
-        setTimeControlButtonListener(holderTimerOn.btnDecMin, holderTimerOn.editMin, position) {timerOn.decMinutes()}
-        setTimeControlButtonListener(holderTimerOn.btnDecSec, holderTimerOn.editSec, position) {timerOn.decSeconds()}
+            timerOn.editHrs.setText(channel.timerOn.toString(AlarmTimer.TimeField.HOURS))
+            timerOn.editMin.setText(channel.timerOn.toString(AlarmTimer.TimeField.MINUTES))
+            timerOn.editSec.setText(channel.timerOn.toString(AlarmTimer.TimeField.SECONDS))
 
-        setTimeControlButtonListener(holderTimerOff.btnIncHrs, holderTimerOff.editHrs, position) {timerOff.incHours() }
-        setTimeControlButtonListener(holderTimerOff.btnIncMin, holderTimerOff.editMin, position) {timerOff.incMinutes() }
-        setTimeControlButtonListener(holderTimerOff.btnIncSec, holderTimerOff.editSec, position) {timerOff.incSeconds() }
-        setTimeControlButtonListener(holderTimerOff.btnDecHrs, holderTimerOff.editHrs, position) {timerOff.decHours() }
-        setTimeControlButtonListener(holderTimerOff.btnDecMin, holderTimerOff.editMin, position) {timerOff.decMinutes() }
-        setTimeControlButtonListener(holderTimerOff.btnDecSec, holderTimerOff.editSec, position) {timerOff.decSeconds() }
 
-        holder.btnOpen.setOnClickListener {
-            currentDevice?.toggleChannel(true, position + 1)
-        }
+            timerOff.editHrs.setText(channel.timerOff.toString(AlarmTimer.TimeField.HOURS))
+            timerOff.editMin.setText(channel.timerOff.toString(AlarmTimer.TimeField.MINUTES))
+            timerOff.editSec.setText(channel.timerOff.toString(AlarmTimer.TimeField.SECONDS))
 
-        holder.btnClose.setOnClickListener {
-            currentDevice?.toggleChannel(false, position + 1)
+
+            setTimeControlButtonListener(
+                timerOn.btnIncHrs,
+                timerOn.editHrs,
+                position
+            ) { channel.timerOn.incHours() }
+            setTimeControlButtonListener(
+                timerOn.btnIncMin,
+                timerOn.editMin,
+                position
+            ) { channel.timerOn.incMinutes() }
+            setTimeControlButtonListener(
+                timerOn.btnIncSec,
+                timerOn.editSec,
+                position
+            ) { channel.timerOn.incSeconds() }
+            setTimeControlButtonListener(
+                timerOn.btnDecHrs,
+                timerOn.editHrs,
+                position
+            ) { channel.timerOn.decHours() }
+            setTimeControlButtonListener(
+                timerOn.btnDecMin,
+                timerOn.editMin,
+                position
+            ) { channel.timerOn.decMinutes() }
+            setTimeControlButtonListener(
+                timerOn.btnDecSec,
+                timerOn.editSec,
+                position
+            ) { channel.timerOn.decSeconds() }
+
+            setTimeControlButtonListener(
+                timerOff.btnIncHrs,
+                timerOff.editHrs,
+                position
+            ) { channel.timerOff.incHours() }
+            setTimeControlButtonListener(
+                timerOff.btnIncMin,
+                timerOff.editMin,
+                position
+            ) { channel.timerOff.incMinutes() }
+            setTimeControlButtonListener(
+                timerOff.btnIncSec,
+                timerOff.editSec,
+                position
+            ) { channel.timerOff.incSeconds() }
+            setTimeControlButtonListener(
+                timerOff.btnDecHrs,
+                timerOff.editHrs,
+                position
+            ) { channel.timerOff.decHours() }
+            setTimeControlButtonListener(
+                timerOff.btnDecMin,
+                timerOff.editMin,
+                position
+            ) { channel.timerOff.decMinutes() }
+            setTimeControlButtonListener(
+                timerOff.btnDecSec,
+                timerOff.editSec,
+                position
+            ) { channel.timerOff.decSeconds() }
+
+            channel.timerView = tvChannelTimer
+
+            btnOpen.setOnClickListener {
+                currentDevice?.let {
+                    it.toggleChannel(true, position + 1)
+                    channel.startTimer()
+                }
+
+            }
+
+            btnClose.setOnClickListener {
+                currentDevice?.let {
+                    it.toggleChannel(false, position + 1)
+                    channel.stopTimer()
+                }
+            }
         }
     }
+
+
 
     fun setCurrentDevice(device: WateringDevice?) {
         currentDevice = device
@@ -127,6 +187,8 @@ class ChannelRecyclerAdapter(private val channels : List<Channel>) : RecyclerVie
         val tvTimeOff : TextView = itemView.tv_timer_off
         var timerOn : View = itemView.time_on
         var timerOff : View = itemView.time_off
+        val tvChannelTimer : TextView = itemView.tv_channel_timer
+        val tvTotalTime : TextView = itemView.tv_total_time
 
     }
 
@@ -175,13 +237,11 @@ class ChannelRecyclerAdapter(private val channels : List<Channel>) : RecyclerVie
                 }
                 MotionEvent.ACTION_UP -> {
                     // If we haven't clicked yet, click now
-                    //Log.i("timer click handler", "ACTION UP")
                     if (!haveClicked) activeView!!.performClick()
                     clearHandler()
                     return true
                 }
                 MotionEvent.ACTION_CANCEL -> {
-                    //Log.i("timer click handler", "ACTION CANCEL")
                     clearHandler()
                     return true
                 }
@@ -210,6 +270,7 @@ class ChannelRecyclerAdapter(private val channels : List<Channel>) : RecyclerVie
         btn.setOnTouchListener(repeatListener)
 
     }
+
 
 
     private class TimeFormattingTextWatcher(isHours: Boolean) : TextWatcher {

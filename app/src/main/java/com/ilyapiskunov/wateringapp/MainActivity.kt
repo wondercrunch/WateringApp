@@ -15,6 +15,7 @@ import android.view.View
 import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.TextView
+import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.DividerItemDecoration
@@ -33,6 +34,7 @@ import kotlinx.coroutines.launch
 import org.jetbrains.anko.alert
 import org.jetbrains.anko.toast
 import java.lang.Exception
+import java.time.Duration
 import java.util.*
 import kotlin.collections.ArrayList
 
@@ -54,9 +56,10 @@ class MainActivity : AppCompatActivity() {
     private var currentDevice : WateringDevice? = null
     private val channels = ArrayList<Channel>()
     private val messages = ArrayList<JournalMessage>()
-    private val channelsAdapter = ChannelRecyclerAdapter(channels)
+    private val channelsAdapter = ChannelRecyclerAdapter(this, channels)
     private val devices : LinkedList<WateringDevice> = LinkedList()
     private lateinit var menuCurrentDevice: MenuItem
+    private var currentToast : Toast? = null
 
     private var isBusy = false
         set(value) {
@@ -73,6 +76,12 @@ class MainActivity : AppCompatActivity() {
         ConnectionManager.registerListener(connectionEventListener)
         ModelPreferencesManager.with(this)
         setContentView(R.layout.activity_main)
+
+/************************** DEBUG *********************************************/
+        //TODO remove later
+        channels.add(Channel(Array(7){false}, Array(7){false}, AlarmTimer(0, 0, 0), AlarmTimer(0,0,0) ))
+/******************************************************************************/
+
 
         list_channels.adapter = channelsAdapter
         list_channels.layoutManager = LinearLayoutManager(this)
@@ -220,7 +229,6 @@ class MainActivity : AppCompatActivity() {
                 if (resultCode == Activity.RESULT_OK) {
                     val address = data?.getStringExtra(EXTRA_ADDRESS)
                     if (address != null) {
-                        //TODO: connect
                         val device = bluetoothAdapter!!.getRemoteDevice(address)
                         Log.i(TAG, "Connecting to " + device.name + "...")
                         ConnectionManager.connect(device, this)
@@ -241,6 +249,7 @@ class MainActivity : AppCompatActivity() {
             menuCurrentDevice.title = device.getName()
             tv_voltage.text = getString(R.string.voltage_format, device.getVoltage())
             tv_water_level.text = getString(R.string.water_level_format, device.getWaterLevel())
+            channels.forEach { channel -> channel.stopTimer() }
             channels.clear()
             channels.addAll(device.channels)
             channelsAdapter.notifyDataSetChanged()
@@ -258,6 +267,7 @@ class MainActivity : AppCompatActivity() {
             menuCurrentDevice.setTitle(R.string.menu_current_device)
             tv_voltage.text = ""
             tv_water_level.text = ""
+            channels.forEach { channel -> channel.stopTimer() }
             channels.clear()
             channelsAdapter.notifyDataSetChanged()
         }
@@ -311,8 +321,9 @@ class MainActivity : AppCompatActivity() {
                                 menuCurrentDevice.title = device.getName()
                             }
                         }
-                        toast("OK")
+                        toastOnce("OK")
                     }
+
             }
 
             onCommandError = { device, cmd, exception ->
@@ -334,12 +345,18 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    //cancel previous toast
+    private fun toastOnce(message: String) {
+        currentToast?.cancel()
+        currentToast = Toast.makeText(this, message, Toast.LENGTH_SHORT)
+        currentToast!!.show()
 
+    }
 
     private fun journal(message: String) = journal("Система", message)
 
 
-    private fun journal(header: String, message: String) = synchronized(messages) { messages.add(JournalMessage(header, message)) }
+    private fun journal(header: String, message: String) = messages.add(JournalMessage(header, message))
 
 
     private val connectionEventListener by lazy {

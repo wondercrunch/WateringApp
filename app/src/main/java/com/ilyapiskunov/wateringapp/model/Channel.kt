@@ -1,6 +1,14 @@
 package com.ilyapiskunov.wateringapp.model
 
+import android.content.Intent
+import android.widget.TextView
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import java.lang.Exception
+import java.util.*
 import kotlin.experimental.or
+import kotlin.math.roundToInt
 
 
 class Channel (val week1 : Array<Boolean>,
@@ -8,7 +16,8 @@ class Channel (val week1 : Array<Boolean>,
                var timerOn : AlarmTimer,
                var timerOff : AlarmTimer
 ) {
-
+    var timerView : TextView? = null
+    private var timer : Timer? = null
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -45,6 +54,47 @@ class Channel (val week1 : Array<Boolean>,
         res[7] = timerOff.seconds.toByte()
         return res
     }
+
+    private inner class TimeTask() : TimerTask() {
+
+        private var time = 0.0
+
+        override fun run() {
+            time++
+            CoroutineScope(Dispatchers.Main).launch {
+                try {
+                    timerView?.text = getTimeStringFromDouble(time)
+                } catch (e : Exception) {
+                    e.printStackTrace()
+                }
+            }
+
+        }
+
+        private fun getTimeStringFromDouble(time: Double) : String {
+            val timeInt = time.roundToInt()
+            val minutes = timeInt / 60
+            val seconds = timeInt % 60
+            return makeTimeString(minutes, seconds)
+        }
+
+        private fun makeTimeString(minutes: Int, seconds: Int): String = String.format("%02d:%02d", minutes, seconds)
+
+
+    }
+
+    fun startTimer() {
+        timer?.cancel()
+        timer = Timer()
+        timer!!.scheduleAtFixedRate(TimeTask(), 1000, 1000)
+    }
+
+    fun stopTimer() {
+        timer?.cancel()
+    }
+
+
+
 
 }
 

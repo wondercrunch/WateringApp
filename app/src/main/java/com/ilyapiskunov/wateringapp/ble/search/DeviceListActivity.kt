@@ -11,6 +11,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -27,7 +28,7 @@ class DeviceListActivity : Activity() {
 
     private val REQUEST_GET_PERMISSION = 3
 
-    private val defaultDeviceAddress = {
+    private val defaultDeviceAddress : String by lazy {
         val properties = Properties()
         properties.load(baseContext.assets.open("app.properties"))
         properties.getProperty("device.address")

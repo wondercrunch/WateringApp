@@ -25,7 +25,7 @@ import java.util.concurrent.TimeUnit
 class WateringDevice(val bluetoothDevice : BluetoothDevice, private val deviceListener : DeviceEventListener) {
     private var waterLevel : Int = 0
     private var voltage : Double = 0.0
-    private var name : String
+    private var name : String = bluetoothDevice.address
     val mcuVersion : ByteArray
     val mcuId : Int
 
@@ -72,7 +72,7 @@ class WateringDevice(val bluetoothDevice : BluetoothDevice, private val deviceLi
 
     init {
         ConnectionManager.registerListener(eventListener)
-
+        deviceListener.onCommandStart.invoke(this@WateringDevice, Command.IDENTIFY)
         CommandPacket(Command.IDENTIFY.code)
             .send()
         val mcuInfoResponse = getResponse().checkStatus().checkData()
@@ -85,16 +85,18 @@ class WateringDevice(val bluetoothDevice : BluetoothDevice, private val deviceLi
 
         //4 byte integer
         mcuId = ByteBuffer.wrap(mcuInfoResponse.data, nameSize+2, 4).order(ByteOrder.BIG_ENDIAN).getInt()
-
+        deviceListener.onCommandSuccess.invoke(this@WateringDevice, Command.IDENTIFY)
         //get channels count
+        deviceListener.onCommandStart.invoke(this@WateringDevice, Command.READ_CONFIG)
         CommandPacket(Command.READ_CONFIG.code)
             .put(1) //read 1 byte - channels count
             .send()
         val countResponse = getResponse().checkStatus().checkData()
+        deviceListener.onCommandSuccess.invoke(this@WateringDevice, Command.READ_CONFIG)
         val channelsCount = countResponse.data[0].toInt()
         if (channelsCount == 0) channels = emptyList()
         else {
-
+            deviceListener.onCommandStart.invoke(this@WateringDevice, Command.READ_CONFIG)
             //get channels
             CommandPacket(Command.READ_CONFIG.code)
                 .put(1 + channelsCount * 8) //channel size (8 bytes) * channels count 
@@ -111,7 +113,7 @@ class WateringDevice(val bluetoothDevice : BluetoothDevice, private val deviceLi
                 val timeOff = readTime(channelStream)
                 Channel(week1, week2, timeOn, timeOff)
             }
-
+            deviceListener.onCommandSuccess.invoke(this@WateringDevice, Command.READ_CONFIG)
         }
     }
 
@@ -218,6 +220,7 @@ class WateringDevice(val bluetoothDevice : BluetoothDevice, private val deviceLi
     }
 
     fun disconnect() {
+        channels.forEach { channel -> channel.stopTimer() }
         ConnectionManager.disconnect(bluetoothDevice)
     }
 
