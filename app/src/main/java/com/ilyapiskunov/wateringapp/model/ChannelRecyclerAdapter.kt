@@ -152,16 +152,19 @@ class ChannelRecyclerAdapter(val context : Context, private val channels : List<
 
             btnOpen.setOnClickListener {
                 currentDevice?.let {
-                    it.toggleChannel(true, position + 1)
-                    channel.startTimer()
+                    it.toggleChannel(true, position + 1).invokeOnCompletion { cause ->
+                        if (cause == null) channel.startTimer()
+                    }
+
                 }
 
             }
 
             btnClose.setOnClickListener {
                 currentDevice?.let {
-                    it.toggleChannel(false, position + 1)
-                    channel.stopTimer()
+                    it.toggleChannel(false, position + 1).invokeOnCompletion { cause ->
+                        if (cause == null) channel.stopTimer()
+                    }
                 }
             }
         }

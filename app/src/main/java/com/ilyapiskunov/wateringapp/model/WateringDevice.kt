@@ -5,10 +5,7 @@ import android.util.Log
 import com.ilyapiskunov.wateringapp.ble.connection.ConnectionEventListener
 import com.ilyapiskunov.wateringapp.ble.connection.ConnectionManager
 import com.ilyapiskunov.wateringapp.exception.TimeoutException
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.io.ByteArrayInputStream
@@ -127,8 +124,8 @@ class WateringDevice(val bluetoothDevice : BluetoothDevice, private val deviceLi
     private fun getResponse() : Response = getResponse(DEFAULT_TIMEOUT)
 
 
-    private fun runCommand(command : Command, block: (() -> Unit)) {
-        scope.launch(Dispatchers.IO) {
+    private fun runCommand(command : Command, block: (() -> Unit)) : Job {
+        return scope.launch(Dispatchers.IO) {
             commandLock.withLock {
                 try {
                     Log.i("SprinklerDevice", "Running command: $command")
@@ -155,8 +152,8 @@ class WateringDevice(val bluetoothDevice : BluetoothDevice, private val deviceLi
         return voltage
     }
 
-    fun getState() {
-        runCommand(Command.GET_STATE) {
+    fun getState() : Job {
+        return runCommand(Command.GET_STATE) {
             CommandPacket(Command.GET_STATE.code)
                 .send()
             val stateResponse = getResponse().checkStatus().checkData()
@@ -166,8 +163,8 @@ class WateringDevice(val bluetoothDevice : BluetoothDevice, private val deviceLi
 
     }
 
-    fun loadConfig() {
-        runCommand(Command.LOAD_CONFIG) {
+    fun loadConfig() : Job {
+        return runCommand(Command.LOAD_CONFIG) {
             val packet = CommandPacket(Command.LOAD_CONFIG.code)
             channels.forEach { channel -> packet.put(channel.toByteArray()) }
             packet.send()
@@ -175,8 +172,8 @@ class WateringDevice(val bluetoothDevice : BluetoothDevice, private val deviceLi
         }
     }
 
-    fun setTime(time: Calendar) {
-        runCommand(Command.SET_TIME) {
+    fun setTime(time: Calendar) : Job {
+        return runCommand(Command.SET_TIME) {
             val day = (time.get(Calendar.DAY_OF_WEEK) - 2).mod(7) //0..6
             var dayByte = 1 shl day
             if (time.get(Calendar.WEEK_OF_YEAR) % 2 != 0)
@@ -192,9 +189,9 @@ class WateringDevice(val bluetoothDevice : BluetoothDevice, private val deviceLi
         }
     }
 
-    fun toggleChannel(on : Boolean, channel: Int) {
+    fun toggleChannel(on : Boolean, channel: Int) : Job {
         val cmd = if (on) Command.RF_ON else Command.RF_OFF
-        runCommand(cmd) {
+        return runCommand(cmd) {
             CommandPacket(cmd.code)
                 .put(channel)
                 .send()
@@ -202,8 +199,8 @@ class WateringDevice(val bluetoothDevice : BluetoothDevice, private val deviceLi
         }
     }
 
-    fun setName(name : String) {
-        runCommand(Command.SET_NAME) {
+    fun setName(name : String) : Job {
+        return runCommand(Command.SET_NAME) {
             val encodedName = name.toByteArray(PacketFormat.getCharset())
             if (encodedName.size > PacketFormat.DEVICE_NAME_MAX_BYTE_SIZE)
                 throw Exception("Длина имени не должна превышать ${PacketFormat.DEVICE_NAME_MAX_BYTE_SIZE} байт")
