@@ -245,5 +245,8 @@ object ConnectionManager {
         }
     }
 
+    fun isDeviceConnected(device: BluetoothDevice) : Boolean {
+        return deviceGattMap[device] != null
+    }
 
 }

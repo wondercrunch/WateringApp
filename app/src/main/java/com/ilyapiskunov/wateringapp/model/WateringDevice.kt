@@ -36,7 +36,8 @@ class WateringDevice(val bluetoothDevice : BluetoothDevice, private val deviceLi
         GET_STATE(0x6E),
         RF_ON(0x68),
         RF_OFF(0x6A),
-        SET_TIME(0x70)
+        SET_TIME(0x70),
+        CONNECTION_PROBE(0x86)
     }
 
     private val commandLock = Mutex() //for sequential execution
@@ -64,6 +65,17 @@ class WateringDevice(val bluetoothDevice : BluetoothDevice, private val deviceLi
 
         }
     }
+
+    private inner class ConnectionProbe() : TimerTask() {
+        override fun run() {
+            runCommand(Command.CONNECTION_PROBE) {
+                CommandPacket(Command.CONNECTION_PROBE.code).put(1).send()
+                getResponse().checkStatus()
+            }
+        }
+    }
+
+    private val connectionProbeTimer = Timer()
 
     val channels : List<Channel>
 
@@ -112,6 +124,7 @@ class WateringDevice(val bluetoothDevice : BluetoothDevice, private val deviceLi
             }
             deviceListener.onCommandSuccess.invoke(this@WateringDevice, Command.READ_CONFIG)
         }
+        connectionProbeTimer.scheduleAtFixedRate(ConnectionProbe(), 2000, 2000)
     }
 
 
@@ -127,15 +140,17 @@ class WateringDevice(val bluetoothDevice : BluetoothDevice, private val deviceLi
     private fun runCommand(command : Command, block: (() -> Unit)) : Job {
         return scope.launch(Dispatchers.IO) {
             commandLock.withLock {
+
                 try {
                     Log.i("SprinklerDevice", "Running command: $command")
-                    deviceListener.onCommandStart.invoke(this@WateringDevice, command)
+                    if (command != Command.CONNECTION_PROBE) deviceListener.onCommandStart.invoke(this@WateringDevice, command)
                     block.invoke()
-                    deviceListener.onCommandSuccess.invoke(this@WateringDevice, command)
-                } catch (e : Exception) {
+                    if (command != Command.CONNECTION_PROBE) deviceListener.onCommandSuccess.invoke(this@WateringDevice, command)
+                } catch (e: Exception) {
                     deviceListener.onCommandError.invoke(this@WateringDevice, command, e)
                 }
                 delay(10)
+
             }
         }
     }
@@ -216,8 +231,14 @@ class WateringDevice(val bluetoothDevice : BluetoothDevice, private val deviceLi
 
     }
 
-    fun disconnect() {
+    fun shutdown() {
+        connectionProbeTimer.cancel()
         channels.forEach { channel -> channel.stopTimer() }
+        unregisterListener()
+    }
+
+    fun disconnect() {
+        shutdown()
         ConnectionManager.disconnect(bluetoothDevice)
     }
 

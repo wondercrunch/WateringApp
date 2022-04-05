@@ -267,7 +267,6 @@ class MainActivity : AppCompatActivity() {
             menuCurrentDevice.setTitle(R.string.menu_current_device)
             tv_voltage.text = ""
             tv_water_level.text = ""
-            channels.forEach { channel -> channel.stopTimer() }
             channels.clear()
             channelsAdapter.notifyDataSetChanged()
         }
@@ -320,6 +319,8 @@ class MainActivity : AppCompatActivity() {
                             WateringDevice.Command.SET_NAME -> {
                                 menuCurrentDevice.title = device.getName()
                             }
+                            WateringDevice.Command.READ_CONFIG -> //this command is used as a dud to uphold connection
+                                return@runOnUiThread
                         }
                         toastOnce("OK")
                     }
@@ -330,6 +331,11 @@ class MainActivity : AppCompatActivity() {
                 journal(device.getName(), "Ошибка при выполнении команды ${cmd.name} - ${exception.message}")
                 exception.printStackTrace()
                 alertError(exception.message)
+
+                if (cmd == WateringDevice.Command.CONNECTION_PROBE) {
+                    if (devices.contains(device))
+                        device.disconnect()
+                }
             }
 
             onRead = {
@@ -395,7 +401,7 @@ class MainActivity : AppCompatActivity() {
                     }
                     disconnectedDevice?.let {
                         devices.remove(it)
-                        it.unregisterListener()
+                        it.shutdown()
                         //toast("Потеряно соединение с ${disconnectedDevice!!.name}")
                         if (devices.isEmpty()) {
                             alertDeviceNotConnected()
