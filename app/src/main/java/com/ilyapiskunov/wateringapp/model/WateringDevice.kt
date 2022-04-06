@@ -2,6 +2,7 @@ package com.ilyapiskunov.wateringapp.model
 
 import android.bluetooth.BluetoothDevice
 import android.util.Log
+import com.ilyapiskunov.wateringapp.Tools.toHex
 import com.ilyapiskunov.wateringapp.ble.connection.ConnectionEventListener
 import com.ilyapiskunov.wateringapp.ble.connection.ConnectionManager
 import com.ilyapiskunov.wateringapp.exception.TimeoutException
@@ -48,7 +49,8 @@ class WateringDevice(val bluetoothDevice : BluetoothDevice, private val deviceLi
         ConnectionEventListener().apply {
             onRead = { device, payload ->
                 if (device == bluetoothDevice) {
-                    deviceListener.onRead.invoke(this@WateringDevice, payload)
+                    Log.i(name, "RX: " + payload.toHex(" "))
+                    //deviceListener.onRead.invoke(this@WateringDevice, payload)
                     try {
                         responseReader.read(payload)?.let { response -> responseQueue.put(response) }
                     } catch (e: Exception) {
@@ -59,7 +61,8 @@ class WateringDevice(val bluetoothDevice : BluetoothDevice, private val deviceLi
             }
             onWrite = { device, payload ->
                 if (device == bluetoothDevice) {
-                    deviceListener.onWrite.invoke(this@WateringDevice, payload)
+                    Log.i(name, "TX: " + payload.toHex(" "))
+                    //deviceListener.onWrite.invoke(this@WateringDevice, payload)
                 }
             }
 
@@ -69,8 +72,11 @@ class WateringDevice(val bluetoothDevice : BluetoothDevice, private val deviceLi
     private inner class ConnectionProbe() : TimerTask() {
         override fun run() {
             runCommand(Command.CONNECTION_PROBE) {
-                CommandPacket(Command.CONNECTION_PROBE.code).put(1).send()
-                getResponse().checkStatus()
+                val payload = CommandPacket(Command.CONNECTION_PROBE.code).put(1).toByteArray()
+                ConnectionManager.write(bluetoothDevice, payload)
+                val response = responseQueue.poll(DEFAULT_TIMEOUT, TimeUnit.MILLISECONDS) ?: throw TimeoutException()
+                response.checkStatus()
+                Log.i(name, "Connection probe OK")
             }
         }
     }
@@ -131,6 +137,7 @@ class WateringDevice(val bluetoothDevice : BluetoothDevice, private val deviceLi
     private fun getResponse(timeout: Long) : Response {
         val response = responseQueue.poll(timeout, TimeUnit.MILLISECONDS) ?: throw TimeoutException()
         Log.i("SprinklerDevice", "Got response: $response")
+        deviceListener.onRead(this, response.rawBytes)
         return response
     }
 
@@ -143,9 +150,9 @@ class WateringDevice(val bluetoothDevice : BluetoothDevice, private val deviceLi
 
                 try {
                     Log.i("SprinklerDevice", "Running command: $command")
-                    if (command != Command.CONNECTION_PROBE) deviceListener.onCommandStart.invoke(this@WateringDevice, command)
+                    deviceListener.onCommandStart.invoke(this@WateringDevice, command)
                     block.invoke()
-                    if (command != Command.CONNECTION_PROBE) deviceListener.onCommandSuccess.invoke(this@WateringDevice, command)
+                    deviceListener.onCommandSuccess.invoke(this@WateringDevice, command)
                 } catch (e: Exception) {
                     deviceListener.onCommandError.invoke(this@WateringDevice, command, e)
                 }
@@ -277,10 +284,13 @@ class WateringDevice(val bluetoothDevice : BluetoothDevice, private val deviceLi
         }
 
         fun send() {
-            ConnectionManager.write(bluetoothDevice, toByteArray())
+            val payload = toByteArray()
+            ConnectionManager.write(bluetoothDevice, payload)
+            deviceListener.onWrite(this@WateringDevice, payload)
+
         }
 
-        private fun toByteArray(): ByteArray {
+        fun toByteArray(): ByteArray {
             val dataLength = dataStream.size()
             cmdStream.putValue(dataLength, PacketFormat.DATA_LENGTH_BYTE_SIZE)
             if (dataLength > 0) {

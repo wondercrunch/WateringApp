@@ -3,7 +3,7 @@ package com.ilyapiskunov.wateringapp.model
 import com.ilyapiskunov.wateringapp.Tools.toHex
 import com.ilyapiskunov.wateringapp.exception.DeviceException
 
-class Response(val status: Int, val data: ByteArray) {
+class Response(val status: Int, val data: ByteArray, val rawBytes : ByteArray) {
 
     fun checkStatus() : Response {
         if (status != 0) throw DeviceException(status)

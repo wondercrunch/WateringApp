@@ -43,7 +43,7 @@ class ResponseReaderImpl : ResponseReader {
                                 PacketFormat.PREFIX_LENGTH + dataLength
                             )
                         reset()
-                        return Response(status, data)
+                        return Response(status, data, buffer)
 
                     }
 

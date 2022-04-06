@@ -302,28 +302,34 @@ class MainActivity : AppCompatActivity() {
         DeviceEventListener().apply {
 
             onCommandStart = { device, cmd ->
-                journal(device.getName(), "Команда ${cmd.name}")
+                if (cmd != WateringDevice.Command.CONNECTION_PROBE)
+                    journal(device.getName(), "Команда ${cmd.name}")
             }
 
             onCommandSuccess = { device, cmd ->
-                journal(device.getName(), "Команда ${cmd.name} выполнена")
+                if (cmd != WateringDevice.Command.CONNECTION_PROBE) {
 
-                if (currentDevice == device)
-                    runOnUiThread {
-                        when (cmd) {
-                            WateringDevice.Command.GET_STATE -> {
-                                tv_voltage.text = getString(R.string.voltage_format, device.getVoltage())
-                                tv_water_level.text = getString(R.string.water_level_format, device.getWaterLevel())
-                            }
+                    journal(device.getName(), "Команда ${cmd.name} выполнена")
 
-                            WateringDevice.Command.SET_NAME -> {
-                                menuCurrentDevice.title = device.getName()
+                    if (currentDevice == device)
+                        runOnUiThread {
+                            when (cmd) {
+                                WateringDevice.Command.GET_STATE -> {
+                                    tv_voltage.text =
+                                        getString(R.string.voltage_format, device.getVoltage())
+                                    tv_water_level.text = getString(
+                                        R.string.water_level_format,
+                                        device.getWaterLevel()
+                                    )
+                                }
+
+                                WateringDevice.Command.SET_NAME -> {
+                                    menuCurrentDevice.title = device.getName()
+                                }
                             }
-                            WateringDevice.Command.READ_CONFIG -> //this command is used as a dud to uphold connection
-                                return@runOnUiThread
+                            toastOnce("OK")
                         }
-                        toastOnce("OK")
-                    }
+                }
 
             }
 
@@ -333,8 +339,7 @@ class MainActivity : AppCompatActivity() {
                 alertError(exception.message)
 
                 if (cmd == WateringDevice.Command.CONNECTION_PROBE) {
-                    if (devices.contains(device))
-                        device.disconnect()
+                    device.disconnect()
                 }
             }
 
