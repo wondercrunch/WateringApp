@@ -13,20 +13,21 @@
     <string name="menu_current_device">Нет устройств</string>
     <string name="btnWrite">Записать</string>
     <string name="voltage_format">Напряжение: %1$.2fВ</string>
-    <string name="water_level_format">Уровень воды: %1$d%%</string>
+    <string name="water_level_format">Уровень воды: &gt;%1$d%%</string>
     <string name="device_version_id_format">Версия прошивки: %1$s\nНомер устройства: %2$d</string>
     <string name="menu_journal">Журнал</string>
     <string name="menu_search">Поиск устройств</string>
     <string name="tv_channel_format">Канал %1$d</string>
     <string name="btn_open_channel">Открыть</string>
     <string name="btn_close_channel">Закрыть</string>
-    <string name="tv_week_odd">Нечёт</string>
-    <string name="tv_week_even">Чёт</string>
-    <string name="tv_timer_on">ВКЛ</string>
-    <string name="tv_timer_off">ВЫКЛ</string>
+    <string name="tv_week_odd">Нечётная неделя</string>
+    <string name="tv_week_even">Чётная неделя</string>
+    <string name="tv_timer_on">Время открытия</string>
+    <string name="tv_timer_off">Время закрытия</string>
     <string name="btn_skip_day">Через день</string>
     <string name="btn_every_day">Каждый день</string>
     <string name="menu_get_state">Обновить статус</string>
     <string name="menu_device_info">Об устройстве</string>
     <string name="tv_total_time_format">Всего: %02d:%02d:%02d</string>
+    <string name="current_week_annotation">(текущая)"</string>
 </resources>

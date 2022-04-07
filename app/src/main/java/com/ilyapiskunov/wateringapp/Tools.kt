@@ -16,4 +16,6 @@ object Tools {
 
     fun ByteArray.toHex(separator : String): String = joinToString(separator = separator) { eachByte -> "%02x".format(eachByte) }
 
+    fun isCurrentWeekEven() : Boolean = Calendar.getInstance().get(Calendar.WEEK_OF_YEAR) % 2 == 0
+
 }

@@ -10,9 +10,9 @@ import android.text.TextWatcher
 import android.view.*
 import android.widget.*
 import androidx.core.view.get
-import androidx.core.widget.addTextChangedListener
 import androidx.recyclerview.widget.RecyclerView
 import com.ilyapiskunov.wateringapp.R
+import com.ilyapiskunov.wateringapp.Tools
 import kotlinx.android.synthetic.main.channel.view.*
 import kotlinx.android.synthetic.main.time.view.*
 import java.util.*
@@ -20,10 +20,6 @@ import java.util.*
 class ChannelRecyclerAdapter(val context : Context, private val channels : List<Channel>) : RecyclerView.Adapter<ChannelRecyclerAdapter.ChannelViewHolder>() {
 
     private var currentDevice : WateringDevice? = null
-    private val isCurrentWeekEven
-        get() = Calendar.getInstance().get(Calendar.WEEK_OF_YEAR) % 2 == 0
-
-
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ChannelViewHolder {
         val itemView = LayoutInflater.from(parent.context).inflate(R.layout.channel, parent, false)
@@ -37,11 +33,13 @@ class ChannelRecyclerAdapter(val context : Context, private val channels : List<
             tvChannelId.text =
                 itemView.context.getString(R.string.tv_channel_format, position + 1)
             val channel: Channel = channels[position]
-            if (isCurrentWeekEven) {
-                tvWeekEven.setTextColor(Color.GREEN)
+
+            if (Tools.isCurrentWeekEven()) {
+                tvWeekEven.text = context.getString(R.string.tv_week_even).plus(" ").plus(context.getString(R.string.current_week_annotation))
             } else {
-                tvWeekOdd.setTextColor(Color.GREEN)
+                tvWeekOdd.text = context.getString(R.string.tv_week_odd).plus(" ").plus(context.getString(R.string.current_week_annotation))
             }
+            
             for (i in 0..6) {
                 val dayOfWeek1: ToggleButton = daysOfWeek1[i] as ToggleButton
                 dayOfWeek1.isChecked = channel.week1[i]
@@ -76,16 +74,16 @@ class ChannelRecyclerAdapter(val context : Context, private val channels : List<
 
 
 
-            timerOn.editHrs.setText(channel.timerOn.toString(AlarmTimer.TimeField.HOURS))
-            timerOn.editMin.setText(channel.timerOn.toString(AlarmTimer.TimeField.MINUTES))
-            timerOn.editSec.setText(channel.timerOn.toString(AlarmTimer.TimeField.SECONDS))
+            timerOn.editHrs.setText(channel.timerOn.toString(ChannelControlTimer.TimeField.HOURS))
+            timerOn.editMin.setText(channel.timerOn.toString(ChannelControlTimer.TimeField.MINUTES))
+            timerOn.editSec.setText(channel.timerOn.toString(ChannelControlTimer.TimeField.SECONDS))
 
 
-            timerOff.editHrs.setText(channel.timerOff.toString(AlarmTimer.TimeField.HOURS))
-            timerOff.editMin.setText(channel.timerOff.toString(AlarmTimer.TimeField.MINUTES))
-            timerOff.editSec.setText(channel.timerOff.toString(AlarmTimer.TimeField.SECONDS))
+            timerOff.editHrs.setText(channel.timerOff.toString(ChannelControlTimer.TimeField.HOURS))
+            timerOff.editMin.setText(channel.timerOff.toString(ChannelControlTimer.TimeField.MINUTES))
+            timerOff.editSec.setText(channel.timerOff.toString(ChannelControlTimer.TimeField.SECONDS))
 
-
+            //shit
             setTimeControlButtonListener(
                 timerOn.btnIncHrs,
                 timerOn.editHrs,
@@ -209,7 +207,7 @@ class ChannelRecyclerAdapter(val context : Context, private val channels : List<
             handlerRunnable = object : Runnable {
                 override fun run() {
 
-                    if(activeView!!.isEnabled) {
+                    if (activeView!!.isEnabled) {
                         haveClicked = true
 
                         // Schedule the next repetitions of the click action,
@@ -221,7 +219,8 @@ class ChannelRecyclerAdapter(val context : Context, private val channels : List<
                         handler.postDelayed(this, repeatInterval.toLong())
                         activeView!!.performClick()
 
-                    }else{
+                    }
+                    else {
                         clearHandler() //stop the loop if the view is disabled during the process
                     }
                 }

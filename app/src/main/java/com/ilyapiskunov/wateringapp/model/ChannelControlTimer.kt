@@ -1,13 +1,16 @@
 package com.ilyapiskunov.wateringapp.model
 
+import java.util.*
 
-data class AlarmTimer(var hours : Int, var minutes: Int, var seconds : Int) {
+//abstract time
+data class ChannelControlTimer(var hours : Int, var minutes: Int, var seconds : Int) {
 
     enum class TimeField {
         HOURS,
         MINUTES,
         SECONDS
     }
+
 
     private fun changeValue(field : TimeField, inc : Int) : Int {
         return when (field) {

@@ -17,7 +17,6 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.core.content.ContextCompat
-import androidx.core.view.isVisible
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.ilyapiskunov.wateringapp.Tools.toHex
@@ -34,7 +33,6 @@ import kotlinx.coroutines.launch
 import org.jetbrains.anko.alert
 import org.jetbrains.anko.toast
 import java.lang.Exception
-import java.time.Duration
 import java.util.*
 import kotlin.collections.ArrayList
 
@@ -78,8 +76,12 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
 /************************** DEBUG *********************************************/
-        //TODO remove later
-        channels.add(Channel(Array(7){false}, Array(7){false}, AlarmTimer(0, 0, 0), AlarmTimer(0,0,0) ))
+        val properties = Properties()
+        properties.load(baseContext.assets.open("app.properties"))
+        val debug = properties.getProperty("debug").toBoolean()
+        if (debug) {
+            channels.add(Channel(Array(7){false}, Array(7){false}, ChannelControlTimer(0, 0, 0), ChannelControlTimer(0,0,0) ))
+        }
 /******************************************************************************/
 
 

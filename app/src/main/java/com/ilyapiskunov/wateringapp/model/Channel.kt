@@ -1,6 +1,5 @@
 package com.ilyapiskunov.wateringapp.model
 
-import android.content.Intent
 import android.widget.TextView
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -13,11 +12,12 @@ import kotlin.math.roundToInt
 
 class Channel (val week1 : Array<Boolean>,
                val week2 : Array<Boolean>,
-               var timerOn : AlarmTimer,
-               var timerOff : AlarmTimer
+               var timerOn : ChannelControlTimer,
+               var timerOff : ChannelControlTimer
 ) {
     var timerView : TextView? = null
     private var timer : Timer? = null
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -55,6 +55,9 @@ class Channel (val week1 : Array<Boolean>,
         return res
     }
 
+    /**
+     * Starts timer to count time passed since channel was opened
+     */
     private inner class TimeTask() : TimerTask() {
 
         private var time = 0.0
