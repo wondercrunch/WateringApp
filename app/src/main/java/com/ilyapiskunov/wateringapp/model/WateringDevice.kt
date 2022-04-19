@@ -22,23 +22,15 @@ import java.util.concurrent.TimeUnit
 
 
 class WateringDevice(val bluetoothDevice : BluetoothDevice, private val deviceListener : DeviceEventListener) {
-    private var waterLevel : Int = 0
-    private var voltage : Double = 0.0
-    private var name : String = bluetoothDevice.address
+    var waterLevel : Int = 0
+        private set
+    var voltage : Double = 0.0
+        private set
+    var name : String = bluetoothDevice.address
+        private set
     val mcuVersion : ByteArray
     val mcuId : Int
 
-    fun getName() : String {
-        return name
-    }
-
-    fun getWaterLevel() : Int {
-        return waterLevel;
-    }
-
-    fun getVoltage() : Double {
-        return voltage
-    }
 
     enum class Command(val code : Int) {
         READ_CONFIG(0x86),

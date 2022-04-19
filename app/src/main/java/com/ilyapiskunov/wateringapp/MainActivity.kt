@@ -138,7 +138,7 @@ class MainActivity : AppCompatActivity() {
                 currentDevice?.let { device ->
                     val input = EditText(this)
                     input.inputType = InputType.TYPE_CLASS_TEXT
-                    input.setText(device.getName(), TextView.BufferType.EDITABLE)
+                    input.setText(device.name, TextView.BufferType.EDITABLE)
                     AlertDialog.Builder(this)
                         .setTitle("Введите новое имя")
                         .setView(input)
@@ -158,7 +158,7 @@ class MainActivity : AppCompatActivity() {
                 if (devices.isNotEmpty()) {
                     AlertDialog.Builder(this)
                         .setTitle("Устройства")
-                        .setItems(devices.map { device -> device.getName() }
+                        .setItems(devices.map { device -> device.name }
                             .toTypedArray()) { _, index ->
                             val selected = devices[index]
                             if (currentDevice != selected)
@@ -248,9 +248,9 @@ class MainActivity : AppCompatActivity() {
             btn_write.visibility = View.VISIBLE
             currentDevice = device
             channelsAdapter.setCurrentDevice(device)
-            menuCurrentDevice.title = device.getName()
-            tv_voltage.text = getString(R.string.voltage_format, device.getVoltage())
-            tv_water_level.text = getString(R.string.water_level_format, device.getWaterLevel())
+            menuCurrentDevice.title = device.name
+            tv_voltage.text = getString(R.string.voltage_format, device.voltage)
+            tv_water_level.text = getString(R.string.water_level_format, device.waterLevel)
             channels.forEach { channel -> channel.stopTimer() }
             channels.clear()
             channels.addAll(device.channels)
@@ -305,28 +305,28 @@ class MainActivity : AppCompatActivity() {
 
             onCommandStart = { device, cmd ->
                 if (cmd != WateringDevice.Command.CONNECTION_PROBE)
-                    journal(device.getName(), "Команда ${cmd.name}")
+                    journal(device.name, "Команда ${cmd.name}")
             }
 
             onCommandSuccess = { device, cmd ->
                 if (cmd != WateringDevice.Command.CONNECTION_PROBE) {
 
-                    journal(device.getName(), "Команда ${cmd.name} выполнена")
+                    journal(device.name, "Команда ${cmd.name} выполнена")
 
                     if (currentDevice == device)
                         runOnUiThread {
                             when (cmd) {
                                 WateringDevice.Command.GET_STATE -> {
                                     tv_voltage.text =
-                                        getString(R.string.voltage_format, device.getVoltage())
+                                        getString(R.string.voltage_format, device.voltage)
                                     tv_water_level.text = getString(
                                         R.string.water_level_format,
-                                        device.getWaterLevel()
+                                        device.waterLevel
                                     )
                                 }
 
                                 WateringDevice.Command.SET_NAME -> {
-                                    menuCurrentDevice.title = device.getName()
+                                    menuCurrentDevice.title = device.name
                                 }
                             }
                             toastOnce("OK")
@@ -336,7 +336,7 @@ class MainActivity : AppCompatActivity() {
             }
 
             onCommandError = { device, cmd, exception ->
-                journal(device.getName(), "Ошибка при выполнении команды ${cmd.name} - ${exception.message}")
+                journal(device.name, "Ошибка при выполнении команды ${cmd.name} - ${exception.message}")
                 exception.printStackTrace()
                 alertError(exception.message)
 
@@ -347,13 +347,13 @@ class MainActivity : AppCompatActivity() {
 
             onRead = {
                     device, bytes ->
-                journal(device.getName(), "RX: " + bytes.toHex(" "))
+                journal(device.name, "RX: " + bytes.toHex(" "))
 
             }
 
             onWrite = {
                     device, bytes ->
-                journal(device.getName(), "TX: " + bytes.toHex(" "))
+                journal(device.name, "TX: " + bytes.toHex(" "))
             }
         }
     }
